@@ -30,6 +30,9 @@ Gear Down was engineered to achieve significant temperature reduction entirely i
 * .NET 8.0 Desktop Runtime
 * Nvidia Dedicated GPU (GTX 10-Series or newer)
 
+## Disclaimer
+**Use at your own risk.** Gear Down modifies system power states and GPU frequencies using official Microsoft and Nvidia APIs. However, I am not responsible for any hardware degradation, system instability, system crashes, data loss, or thermal damage that may occur while using or misusing this software. By downloading and running this application, you accept full responsibility for your hardware.
+
 ## Development
 Built with C# and WPF (Windows Presentation Foundation). The project is compiled as a framework-dependent executable to minimize deployment payload, handling dependencies via the host operating system.
 

@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "GearDown/1.0.0": {
+        "dependencies": {
+          "NvAPIWrapper.Net": "0.8.1.101"
+        },
+        "runtime": {
+          "GearDown.dll": {}
+        }
+      },
+      "NvAPIWrapper.Net/0.8.1.101": {
+        "runtime": {
+          "lib/netstandard2.0/NvAPIWrapper.dll": {
+            "assemblyVersion": "0.8.1.100",
+            "fileVersion": "0.8.1.100"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "GearDown/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "NvAPIWrapper.Net/0.8.1.101": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qX+5EQ32tCTqBkX/9BNfx7w4HPi18s3XhMubjbxSjPhYQ6pXWL+HGnaZEmGvFlOxvsQN+/6eV3x5bRo1CDY/mQ==",
+      "path": "nvapiwrapper.net/0.8.1.101",
+      "hashPath": "nvapiwrapper.net.0.8.1.101.nupkg.sha512"
+    }
+  }
+}

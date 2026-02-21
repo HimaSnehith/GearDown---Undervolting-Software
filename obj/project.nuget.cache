@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "SobVWjM0Vf8=",
+  "success": true,
+  "projectFilePath": "D:\\GearDown\\GearDown.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\neera\\.nuget\\packages\\nvapiwrapper.net\\0.8.1.101\\nvapiwrapper.net.0.8.1.101.nupkg.sha512"
+  ],
+  "logs": []
+}

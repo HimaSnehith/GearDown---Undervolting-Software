@@ -1,0 +1,7 @@
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\GearDown.exe
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\fan.ico
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\GearDown.dll
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\GearDown.deps.json
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\GearDown.runtimeconfig.json
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\GearDown.pdb
+D:\GearDown\bin\Release\net8.0-windows\win-x64\publish\NvAPIWrapper.dll

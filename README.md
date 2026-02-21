@@ -14,6 +14,11 @@ Gear Down was engineered to achieve significant temperature reduction entirely i
 * **State Persistence:** Automatically serializes user limits to a local JSON configuration, reapplying target hardware states silently upon application boot.
 * **Fail-Safe Restoration:** Integrates cleanly with the Windows System Tray. Instantly relinquishes control and restores all hardware to factory default settings the moment the process is terminated.
 
+## ScreenShots
+<img width="506" height="830" alt="Screenshot 2026-02-21 222641" src="https://github.com/user-attachments/assets/0ca53857-ee52-467e-86a4-33af8ec336fa" />
+<img width="504" height="834" alt="Screenshot 2026-02-21 222627" src="https://github.com/user-attachments/assets/5f388786-2efe-4ea7-b9bb-dba0dcfab679" />
+
+
 ## Installation
 1. Navigate to the **Releases** tab on this repository.
 2. Download the latest `Setup.exe` (Highly compressed, framework-dependent build).

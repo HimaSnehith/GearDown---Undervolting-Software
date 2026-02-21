@@ -32,3 +32,6 @@ Gear Down was engineered to achieve significant temperature reduction entirely i
 
 ## Development
 Built with C# and WPF (Windows Presentation Foundation). The project is compiled as a framework-dependent executable to minimize deployment payload, handling dependencies via the host operating system.
+
+## Support or Dontate [only if you want, no Pressure :) ]
+UPIid: neerajajagadesh029-1@okicici

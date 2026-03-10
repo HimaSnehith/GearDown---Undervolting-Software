@@ -31,7 +31,7 @@ To get the best results, you need to find the optimal frequency limit for your s
 * My RTX 4050 operates between 210 MHz and 2700 MHz.
 * At stock settings, GTA V naturally boosts to around **2300 - 2600 MHz**, causing temperatures to hit **75°C**.
 * I use Gear Down to cap the frequency at **1800 MHz**.
-* **The Result:** I only lose about 5-7% of my frames, but my temperatures drastically drop to **55°C - 60°C** (as shown in the repository screenshots).
+* **The Result:** I only lose about 5-7% of my frames, but my temperatures drastically drop to **55°C - 60°C**.
 
 *Note: It is recommended (though purely optional) to close the application or hit "Reset Everything" when you are done gaming, just to ensure your normal Windows desktop applications aren't unnecessarily capped.*
 
@@ -48,7 +48,9 @@ To get the best results, you need to find the optimal frequency limit for your s
 * Nvidia Dedicated GPU (GTX 10-Series or newer)
 
 ## Disclaimer
-**Use at your own risk.** Gear Down modifies system power states and GPU frequencies using official Microsoft and Nvidia APIs. However, I am not responsible for any hardware degradation, system instability, system crashes, data loss, or thermal damage that may occur while using or misusing this software. By downloading and running this application, you accept full responsibility for your hardware.
+**Use at your own risk.** Gear Down modifies system power states and GPU frequencies using official Microsoft and Nvidia APIs. However, I am not responsible for any hardware degradation, system instability, system crashes, data loss, or thermal damage that may occur while using or misusing this software. By downloading and running this application, you accept full responsibility for your hardware. 
+
+**NOTE**: this is purely made to undervolt/underclock your GPU, increasing the clock frequency can overclock your GPU and I am not responsible for any of the damages that are caused to your laptop and rest of the deatils shall follow already disclaimed as above.
 
 ## Development
 Built with C# and WPF (Windows Presentation Foundation). The project is compiled as a framework-dependent executable to minimize deployment payload, handling dependencies via the host operating system.

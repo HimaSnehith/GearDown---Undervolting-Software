@@ -18,6 +18,23 @@ Gear Down was engineered to achieve significant temperature reduction entirely i
 <img width="506" height="830" alt="Screenshot 2026-02-21 222641" src="https://github.com/user-attachments/assets/0ca53857-ee52-467e-86a4-33af8ec336fa" />
 <img width="504" height="834" alt="Screenshot 2026-02-21 222627" src="https://github.com/user-attachments/assets/5f388786-2efe-4ea7-b9bb-dba0dcfab679" />
 
+## How to Use (Finding Your Sweet Spot)
+
+To get the best results, you need to find the optimal frequency limit for your specific GPU and the game you are playing.
+
+1. **Check Your GPU's Range:** Look up your laptop GPU's maximum clock speed online to understand your hardware's limits.
+2. **Observe Default Behavior:** Launch your game without Gear Down running and observe what clock frequency it naturally boosts to under load.
+3. **Apply the Limit:** Open Gear Down and adjust the GPU Max Frequency slider to a value lower than the game's natural boost clock.
+4. **Test and Tweak:** Check your temperatures and framerates. Adjust the slider until you find the perfect balance between heat reduction and performance. Since every game demands different power levels, your ideal limit will vary from game to game.
+
+**Real-World Example (RTX 4050 playing GTA V):**
+* My RTX 4050 operates between 210 MHz and 2700 MHz.
+* At stock settings, GTA V naturally boosts to around **2300 - 2600 MHz**, causing temperatures to hit **75°C**.
+* I use Gear Down to cap the frequency at **1800 MHz**.
+* **The Result:** I only lose about 5-7% of my frames, but my temperatures drastically drop to **55°C - 60°C** (as shown in the repository screenshots).
+
+*Note: It is recommended (though purely optional) to close the application or hit "Reset Everything" when you are done gaming, just to ensure your normal Windows desktop applications aren't unnecessarily capped.*
+
 
 ## Installation
 1. Navigate to the **Releases** tab on this repository.

@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.ComponentModel;
+using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using System.Drawing; 
 using System.Windows.Forms; 
 using System.IO;
-using System.Text.Json;
 using GearDown.Core;
 
 using Application = System.Windows.Application;
-using WpfBrushes = System.Windows.Media.Brushes; 
 
 namespace GearDown
 {
@@ -25,6 +25,7 @@ namespace GearDown
         public MainWindow()
         {
             InitializeComponent();
+            LoadThemeFromConfig();
             SetupTrayIcon();
             LoadAndApplySettings();
 
@@ -34,6 +35,41 @@ namespace GearDown
                 TempText.Text = $"{_gpu.GetCurrentTemp()} °C";
             };
             _monitor.Start();
+        }
+
+        private void LoadThemeFromConfig()
+        {
+            bool isLight = false;
+            try
+            {
+                if (File.Exists(_configPath))
+                {
+                    var json = File.ReadAllText(_configPath);
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("Theme", out var t))
+                        isLight = string.Equals(t.GetString(), "Light", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch { /* keep default */ }
+
+            ApplyTheme(isLight);
+            LightThemeCheckBox.IsChecked = isLight;
+        }
+
+        private void ApplyTheme(bool isLight)
+        {
+            var rd = (ResourceDictionary)Resources;
+            rd.MergedDictionaries[0].Source = new Uri(
+                isLight
+                    ? "pack://application:,,,/Themes/Theme.Light.xaml"
+                    : "pack://application:,,,/Themes/Theme.Dark.xaml",
+                UriKind.Absolute);
+        }
+
+        private void ThemeLight_Changed(object sender, RoutedEventArgs e)
+        {
+            ApplyTheme(LightThemeCheckBox.IsChecked == true);
+            SaveSettings();
         }
 
         // --- PERSISTENCE ENGINE ---
@@ -58,7 +94,7 @@ namespace GearDown
                         CpuStatusText.Text = $"CPU: {savedCpu}%";
                         GpuStatusText.Text = $"GPU: {savedGpu} MHz";
                         StatusText.Text = "Saved Limits Auto-Applied";
-                        StatusText.Foreground = WpfBrushes.Cyan;
+                        StatusText.SetResourceReference(TextBlock.ForegroundProperty, "BrushCodeStatusSaved");
                     }
                 }
             } 
@@ -69,7 +105,13 @@ namespace GearDown
         {
             try
             {
-                var config = new { Cpu = (int)CpuPowerSlider.Value, Gpu = (int)FreqSlider.Value };
+                bool isLight = LightThemeCheckBox.IsChecked == true;
+                var config = new
+                {
+                    Cpu = (int)CpuPowerSlider.Value,
+                    Gpu = (int)FreqSlider.Value,
+                    Theme = isLight ? "Light" : "Dark"
+                };
                 File.WriteAllText(_configPath, JsonSerializer.Serialize(config));
             }
             catch { }
@@ -119,26 +161,18 @@ namespace GearDown
         }
 
         // --- BUTTON HANDLERS ---
-        private void ApplyCpu_Click(object sender, RoutedEventArgs e)
+        private void Apply_Click(object sender, RoutedEventArgs e)
         {
             int powerState = (int)CpuPowerSlider.Value;
-            _cpu.SetThrottleLevel(powerState);
-            SaveSettings();
-            
-            CpuStatusText.Text = $"CPU: {powerState}%";
-            StatusText.Text = $"CPU Max State Capped at {powerState}%";
-            StatusText.Foreground = WpfBrushes.Orange;
-        }
-
-        private void ApplyGpu_Click(object sender, RoutedEventArgs e)
-        {
             int mhz = (int)FreqSlider.Value;
+            _cpu.SetThrottleLevel(powerState);
             _gpu.SetClockLimit(mhz);
             SaveSettings();
-            
+
+            CpuStatusText.Text = $"CPU: {powerState}%";
             GpuStatusText.Text = $"GPU: {mhz} MHz";
-            StatusText.Text = "GPU Dynamic Range Active";
-            StatusText.Foreground = WpfBrushes.LightGreen;
+            StatusText.Text = $"Applied · CPU max {powerState}% · GPU cap {mhz} MHz";
+            StatusText.SetResourceReference(TextBlock.ForegroundProperty, "BrushCodeStatusApplied");
         }
 
         private void Reset_Click(object sender, RoutedEventArgs e)
@@ -150,7 +184,7 @@ namespace GearDown
             GpuStatusText.Text = "GPU: Default";
             CpuStatusText.Text = "CPU: 100% (Default)";
             StatusText.Text = "Factory Defaults Restored.";
-            StatusText.Foreground = WpfBrushes.White;
+            StatusText.SetResourceReference(TextBlock.ForegroundProperty, "BrushCodeStatusReset");
         }
 
         private void FreqSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

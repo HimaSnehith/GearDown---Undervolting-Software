@@ -20,11 +20,14 @@ namespace GearDown
         private DispatcherTimer _monitor;
         private NotifyIcon? _trayIcon; 
         
-        private string _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+        private string _configPath;
 
         public MainWindow()
         {
             InitializeComponent();
+            string appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GearDown");
+            if (!Directory.Exists(appDataFolder)) Directory.CreateDirectory(appDataFolder);
+            _configPath = Path.Combine(appDataFolder, "config.json");
             
             // Auto-detect the user's GPU and set the title
             GpuNameText.Text = GetGpuName();
@@ -114,7 +117,8 @@ namespace GearDown
         private void SetupTrayIcon()
         {
             _trayIcon = new NotifyIcon();
-            try { _trayIcon.Icon = new System.Drawing.Icon("fan.ico"); } 
+            try {var streamInfo = Application.GetResourceStream(new Uri("pack://application:,,,/fan.ico"));
+                _trayIcon.Icon = new System.Drawing.Icon(streamInfo.Stream);} 
             catch { _trayIcon.Icon = SystemIcons.Shield; } 
             
             _trayIcon.Text = "Gear Down (Active)";

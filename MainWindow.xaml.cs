@@ -25,7 +25,10 @@ namespace GearDown
         public MainWindow()
         {
             InitializeComponent();
-            LoadThemeFromConfig();
+            
+            // Auto-detect the user's GPU and set the title
+            GpuNameText.Text = GetGpuName();
+
             SetupTrayIcon();
             LoadAndApplySettings();
 
@@ -37,39 +40,32 @@ namespace GearDown
             _monitor.Start();
         }
 
-        private void LoadThemeFromConfig()
+        // --- HARDWARE DETECTION ---
+        private string GetGpuName()
         {
-            bool isLight = false;
             try
             {
-                if (File.Exists(_configPath))
+                var process = new System.Diagnostics.Process
                 {
-                    var json = File.ReadAllText(_configPath);
-                    using var doc = JsonDocument.Parse(json);
-                    if (doc.RootElement.TryGetProperty("Theme", out var t))
-                        isLight = string.Equals(t.GetString(), "Light", StringComparison.OrdinalIgnoreCase);
-                }
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "nvidia-smi",
+                        Arguments = "--query-gpu=name --format=csv,noheader",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd().Trim();
+                process.WaitForExit();
+                
+                return string.IsNullOrEmpty(output) ? "NVIDIA GPU DETECTED" : output.ToUpper();
             }
-            catch { /* keep default */ }
-
-            ApplyTheme(isLight);
-            LightThemeCheckBox.IsChecked = isLight;
-        }
-
-        private void ApplyTheme(bool isLight)
-        {
-            var rd = (ResourceDictionary)Resources;
-            rd.MergedDictionaries[0].Source = new Uri(
-                isLight
-                    ? "pack://application:,,,/Themes/Theme.Light.xaml"
-                    : "pack://application:,,,/Themes/Theme.Dark.xaml",
-                UriKind.Absolute);
-        }
-
-        private void ThemeLight_Changed(object sender, RoutedEventArgs e)
-        {
-            ApplyTheme(LightThemeCheckBox.IsChecked == true);
-            SaveSettings();
+            catch
+            {
+                return "NVIDIA GRAPHICS DEVICE"; 
+            }
         }
 
         // --- PERSISTENCE ENGINE ---
@@ -91,10 +87,9 @@ namespace GearDown
                         _cpu.SetThrottleLevel(savedCpu);
                         _gpu.SetClockLimit(savedGpu);
                         
-                        CpuStatusText.Text = $"CPU: {savedCpu}%";
-                        GpuStatusText.Text = $"GPU: {savedGpu} MHz";
-                        StatusText.Text = "Saved Limits Auto-Applied";
-                        StatusText.SetResourceReference(TextBlock.ForegroundProperty, "BrushCodeStatusSaved");
+                        CpuStatusText.Text = $"SYSTEM: {savedCpu}%";
+                        GpuStatusText.Text = $"SYSTEM: {savedGpu} MHz";
+                        SetStatusText("INITIALIZED: CONFIG LOADED");
                     }
                 }
             } 
@@ -105,12 +100,10 @@ namespace GearDown
         {
             try
             {
-                bool isLight = LightThemeCheckBox.IsChecked == true;
                 var config = new
                 {
                     Cpu = (int)CpuPowerSlider.Value,
-                    Gpu = (int)FreqSlider.Value,
-                    Theme = isLight ? "Light" : "Dark"
+                    Gpu = (int)FreqSlider.Value
                 };
                 File.WriteAllText(_configPath, JsonSerializer.Serialize(config));
             }
@@ -165,14 +158,14 @@ namespace GearDown
         {
             int powerState = (int)CpuPowerSlider.Value;
             int mhz = (int)FreqSlider.Value;
+            
             _cpu.SetThrottleLevel(powerState);
             _gpu.SetClockLimit(mhz);
             SaveSettings();
 
-            CpuStatusText.Text = $"CPU: {powerState}%";
-            GpuStatusText.Text = $"GPU: {mhz} MHz";
-            StatusText.Text = $"Applied · CPU max {powerState}% · GPU cap {mhz} MHz";
-            StatusText.SetResourceReference(TextBlock.ForegroundProperty, "BrushCodeStatusApplied");
+            CpuStatusText.Text = $"SYSTEM: {powerState}%";
+            GpuStatusText.Text = $"SYSTEM: {mhz} MHz";
+            SetStatusText($"EXECUTED · CPU {powerState}% · GPU {mhz} MHz");
         }
 
         private void Reset_Click(object sender, RoutedEventArgs e)
@@ -181,19 +174,44 @@ namespace GearDown
             if (File.Exists(_configPath)) File.Delete(_configPath);
             
             CpuPowerSlider.Value = 100;
-            GpuStatusText.Text = "GPU: Default";
-            CpuStatusText.Text = "CPU: 100% (Default)";
-            StatusText.Text = "Factory Defaults Restored.";
-            StatusText.SetResourceReference(TextBlock.ForegroundProperty, "BrushCodeStatusReset");
+            GpuStatusText.Text = "SYSTEM: DEFAULT";
+            CpuStatusText.Text = "SYSTEM: 100% (DEFAULT)";
+            SetStatusText("ABORTED: FACTORY DEFAULTS RESTORED");
+        }
+
+        private void SetStatusText(string text)
+        {
+            StatusText.Text = text;
+            StatusText.Visibility = string.IsNullOrWhiteSpace(text)
+                ? Visibility.Collapsed
+                : Visibility.Visible;
         }
 
         private void FreqSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (sender is Slider slider)
+            {
+                int roundedValue = (int)(Math.Round(e.NewValue / 10.0) * 10);
+                if (roundedValue != (int)slider.Value)
+                {
+                    slider.Value = roundedValue;
+                    return;
+                }
+            }
             if (SliderValueText != null) SliderValueText.Text = $"{(int)e.NewValue} MHz";
         }
 
         private void CpuSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (sender is Slider slider)
+            {
+                int roundedValue = (int)(Math.Round(e.NewValue / 1.0) * 1); // 1% smooth increments
+                if (roundedValue != (int)slider.Value)
+                {
+                    slider.Value = roundedValue;
+                    return;
+                }
+            }
             if (CpuSliderValueText != null) CpuSliderValueText.Text = $"{(int)e.NewValue} %";
         }
     }

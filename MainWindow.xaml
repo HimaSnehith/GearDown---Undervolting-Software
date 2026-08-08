@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="GearDown"
-        MinWidth="420" MinHeight="600"
-        Width="500" Height="680"
+        MinWidth="440" MinHeight="660"
+        Width="520" Height="740"
         Icon="fan.ico"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
@@ -25,6 +25,11 @@
         <LinearGradientBrush x:Key="WarningGradient" StartPoint="0,0" EndPoint="1,1">
             <GradientStop Color="#FFCC00" Offset="0.0"/>
             <GradientStop Color="#D9A600" Offset="1.0"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="FireGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FF5500" Offset="0.0"/>
+            <GradientStop Color="#CC2200" Offset="1.0"/>
         </LinearGradientBrush>
 
         <Style x:Key="ModernSliderThumb" TargetType="Thumb">
@@ -83,12 +88,43 @@
         <Style x:Key="HardwareCard" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource BgCard}"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="22"/>
+            <Setter Property="Padding" Value="20"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderDark}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="3" Opacity="0.4"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SegmentedRadioButton" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Background" Value="#1A1A1A"/>
+            <Setter Property="BorderBrush" Value="#2E2E2E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#00E65C"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#00E65C"/>
+                                <Setter Property="Foreground" Value="#000000"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#00E65C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -133,17 +169,18 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,25">
-                <TextBlock Text="GEAR DOWN" FontSize="30" FontWeight="Black" Foreground="{StaticResource TextPrimary}"/>
-                <TextBlock Text="NATIVE HARDWARE GOVERNOR" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="GEAR DOWN" FontSize="28" FontWeight="Black" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="NATIVE HARDWARE &amp; THERMAL GOVERNOR" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
             </StackPanel>
 
-            <TextBlock Grid.Row="1" x:Name="StatusText" Visibility="Collapsed" FontSize="12" FontWeight="SemiBold" Foreground="#00E65C" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+            <TextBlock Grid.Row="1" x:Name="StatusText" Visibility="Collapsed" FontSize="12" FontWeight="SemiBold" Foreground="#00E65C" Margin="0,0,0,12" HorizontalAlignment="Center"/>
 
             <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Hidden">
                 <StackPanel>
                     
-                    <Border Style="{StaticResource HardwareCard}" Margin="0,0,0,16" Padding="20,16">
+                    <!-- TEMPERATURE MONITOR -->
+                    <Border Style="{StaticResource HardwareCard}" Margin="0,0,0,14" Padding="20,14">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -152,10 +189,10 @@
                             
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock x:Name="GpuNameText" Text="DETECTING GPU..." FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,2" TextWrapping="Wrap"/>
-                                <TextBlock Text="Temperature" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}"/>
+                                <TextBlock Text="Live GPU Temperature" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}"/>
                             </StackPanel>
                             
-                            <TextBlock Grid.Column="1" x:Name="TempText" Text="-- °C" FontSize="48" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Grid.Column="1" x:Name="TempText" Text="-- °C" FontSize="44" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center">
                                 <TextBlock.Foreground>
                                     <StaticResource ResourceKey="ToxicGradient"/>
                                 </TextBlock.Foreground>
@@ -166,41 +203,129 @@
                         </Grid>
                     </Border>
 
-                    <Border Style="{StaticResource HardwareCard}" Margin="0,0,0,16">
+                    <!-- CPU CONTROL -->
+                    <Border Style="{StaticResource HardwareCard}" Margin="0,0,0,14">
                         <StackPanel>
                             <Grid>
                                 <TextBlock Text="CPU POWER STATE LIMIT" FontSize="12" FontWeight="SemiBold" Foreground="#FFCC00"/>
                                 <TextBlock x:Name="CpuSliderValueText" Text="100 %" FontSize="14" FontWeight="Bold" Foreground="#FFCC00" HorizontalAlignment="Right"/>
                             </Grid>
-                            <TextBlock Text="Caps maximum processor scaling state." FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,4,0,15"/>
+                            <TextBlock Text="Caps maximum processor scaling state." FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,4,0,12"/>
                             
                             <Slider x:Name="CpuPowerSlider" Minimum="50" Maximum="100" Value="100" 
                                     TickFrequency="1" SmallChange="1" LargeChange="5" 
                                     Foreground="{StaticResource WarningGradient}" ValueChanged="CpuSlider_ValueChanged"/>
                             
-                            <TextBlock x:Name="CpuStatusText" Text="SYSTEM: 100% (DEFAULT)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                            <TextBlock x:Name="CpuStatusText" Text="SYSTEM: 100% (DEFAULT)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
+                    <!-- GPU CONTROL & GOVERNOR -->
                     <Border Style="{StaticResource HardwareCard}">
                         <StackPanel>
-                            <Grid>
-                                <TextBlock Text="GPU CLOCK FREQUENCY" FontSize="12" FontWeight="SemiBold" Foreground="#00FF66"/>
-                                <TextBlock x:Name="SliderValueText" Text="2100 MHz" FontSize="14" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right"/>
+                            <Grid Margin="0,0,0,12">
+                                <TextBlock Text="GPU CONTROL GOVERNOR" FontSize="12" FontWeight="SemiBold" Foreground="#00FF66"/>
                             </Grid>
-                            <TextBlock Text="Caps Max Clock Frequency." FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,4,0,15"/>
+
+                            <!-- MODE SELECTOR SWITCH -->
+                            <UniformGrid Columns="2" Margin="0,0,0,14">
+                                <RadioButton x:Name="FixedFreqRadio" Content="Fixed Clock Cap" Style="{StaticResource SegmentedRadioButton}" Margin="0,0,4,0" IsChecked="True" Checked="GpuMode_Changed"/>
+                                <RadioButton x:Name="TempLockRadio" Content="Dynamic Temp Lock" Style="{StaticResource SegmentedRadioButton}" Margin="4,0,0,0" Checked="GpuMode_Changed"/>
+                            </UniformGrid>
+
+                            <!-- MODE 1: FIXED FREQUENCY SLIDER -->
+                            <StackPanel x:Name="FixedFreqPanel">
+                                <Grid>
+                                    <TextBlock Text="CLOCK LIMIT" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}"/>
+                                    <TextBlock x:Name="SliderValueText" Text="1800 MHz" FontSize="14" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <TextBlock Text="Caps maximum GPU clock frequency." FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,4,0,10"/>
+                                
+                                <Slider x:Name="FreqSlider" Minimum="210" Maximum="3500" Value="1800" 
+                                        TickFrequency="10" SmallChange="10" LargeChange="50" 
+                                        Foreground="{StaticResource ToxicGradient}" ValueChanged="FreqSlider_ValueChanged"/>
+                            </StackPanel>
+
+                            <!-- MODE 2: DYNAMIC TEMP LOCK PANEL -->
+                            <StackPanel x:Name="TempLockPanel" Visibility="Collapsed">
+                                <Grid>
+                                    <TextBlock Text="TARGET TEMPERATURE" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}"/>
+                                    <TextBlock x:Name="TempTargetValueText" Text="75 °C" FontSize="14" FontWeight="Bold" Foreground="#FF5500" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <TextBlock Text="Dynamically scales clock limit to maintain target temp under load." FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,4,0,10"/>
+                                
+                                <Slider x:Name="TempTargetSlider" Minimum="55" Maximum="85" Value="75" 
+                                        TickFrequency="1" SmallChange="1" LargeChange="5" 
+                                        Foreground="{StaticResource FireGradient}" ValueChanged="TempTargetSlider_ValueChanged"/>
+
+                                <Grid Margin="0,10,0,0">
+                                    <TextBlock Text="MAX CLOCK CEILING" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}"/>
+                                    <TextBlock x:Name="MaxCapValueText" Text="2200 MHz" FontSize="12" FontWeight="Bold" Foreground="#00FF66" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Slider x:Name="MaxCapSlider" Minimum="800" Maximum="3500" Value="2200" 
+                                        TickFrequency="10" SmallChange="10" LargeChange="50" 
+                                        Foreground="{StaticResource ToxicGradient}" ValueChanged="MaxCapSlider_ValueChanged" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock x:Name="GpuStatusText" Text="SYSTEM: DEFAULT" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- PER-APPLICATION AUTOMATIC PROFILES -->
+                    <Border Style="{StaticResource HardwareCard}" Margin="0,14,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock Text="PER-APP THERMAL PROFILES" FontSize="12" FontWeight="SemiBold" Foreground="#33CCFF"/>
+                                <CheckBox x:Name="EnableAppGovernorCheck" Content="Auto-Profile Mode" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right" Click="EnableAppGovernor_Click"/>
+                            </Grid>
                             
-                            <Slider x:Name="FreqSlider" Minimum="210" Maximum="3500" Value="1800" 
-                                    TickFrequency="10" SmallChange="10" LargeChange="50" 
-                                    Foreground="{StaticResource ToxicGradient}" ValueChanged="FreqSlider_ValueChanged"/>
-                            
-                            <TextBlock x:Name="GpuStatusText" Text="SYSTEM: DEFAULT" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                            <TextBlock Text="Auto-applies custom temperature locks or clock caps per active game/app." FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                            <!-- ACTIVE FOREGROUND FOCUS INDICATOR -->
+                            <Border Background="#111111" BorderBrush="#2E2E2E" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="ACTIVE FOCUS:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMuted}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" x:Name="ActiveAppText" Text="GLOBAL DEFAULT (NO MATCH)" FontSize="11" FontWeight="Bold" Foreground="#33CCFF" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- ADD RULE INPUTS -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="NewAppExeInput" ToolTip="e.g. cyberpunk2077, chrome, msedge" Background="#111111" Foreground="{StaticResource TextPrimary}" BorderBrush="#2E2E2E" Padding="8,6" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <Button Grid.Column="1" Content="+ Add Profile for App" Click="AddAppRule_Click" Padding="10,6" Background="#1E2A38" Foreground="#33CCFF" BorderBrush="#2E445C" BorderThickness="1" FontSize="11" FontWeight="Bold" Style="{StaticResource ModernButton}"/>
+                            </Grid>
+
+                            <!-- APP RULES LIST -->
+                            <ListBox x:Name="AppRulesListBox" Height="110" Background="#111111" BorderBrush="#2A2A2A" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,4">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="4,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding ProcessName}" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding DisplaySummary}" FontSize="11" Foreground="#33CCFF" Margin="10,0" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="2" Content="✕" Click="DeleteAppRule_Click" Tag="{Binding}" Background="Transparent" Foreground="#FF5555" BorderThickness="0" FontWeight="Bold" Padding="6,0" Cursor="Hand"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
 
-            <UniformGrid Grid.Row="3" Columns="2" Margin="0,20,0,0">
+            <UniformGrid Grid.Row="3" Columns="2" Margin="0,16,0,0">
                 <Button Content="Apply Settings" Margin="0,0,5,0" Background="{StaticResource TextPrimary}" Style="{StaticResource ModernButton}" Click="Apply_Click"/>
                 <Button Content="Restore Defaults" Margin="5,0,0,0" Background="#1E1E1E" Click="Reset_Click">
                     <Button.Style>

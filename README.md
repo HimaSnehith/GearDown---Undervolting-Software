@@ -9,9 +9,11 @@ Gear Down was engineered to achieve significant temperature reduction entirely i
 
 ## Core Features
 * **Native CPU Power Governance:** Modifies Windows Power Plan states via `powercfg` to cap maximum processor power draw. This limits thermal output natively without injecting code or running resource-heavy background loops.
-* **Dynamic GPU Frequency Range:** Utilizes the Nvidia System Management Interface (`nvidia-smi`) to establish a strict ceiling on GPU clock speeds, while still allowing the hardware to naturally downclock to idle states (e.g., 210 MHz) to conserve power during load screens or desktop use.
-* **Zero Overhead:** The application relies on event-driven UI updates rather than aggressive polling loops. The background process consumes 0.00% CPU.
-* **State Persistence:** Automatically serializes user limits to a local JSON configuration, reapplying target hardware states silently upon application boot.
+* **Dual GPU Control Modes (Exclusive Toggle):**
+  * **Fixed Frequency Cap Mode:** Establishes a strict clock ceiling via `nvidia-smi -lgc`, letting the hardware downclock naturally (210 MHz idle) while capping peak boost.
+  * **Dynamic Temperature Lock Mode (Software Closed-Loop Governor):** Allows you to pick a target temperature (e.g. 70°C, 75°C). The real-time governor dynamically auto-tunes the GPU clock limits on the fly under load to hold the target temperature precisely without severe thermal throttling.
+* **Zero Overhead:** The application relies on efficient event-driven UI updates and lightweight governor ticks.
+* **State Persistence:** Automatically serializes user mode and limits to a local JSON configuration, reapplying target hardware states silently upon application boot.
 * **Fail-Safe Restoration:** Integrates cleanly with the Windows System Tray. Instantly relinquishes control and restores all hardware to factory default settings the moment the process is terminated.
 
 ## ScreenShots

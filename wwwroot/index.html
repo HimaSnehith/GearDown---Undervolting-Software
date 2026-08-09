@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GearDown Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- HEADER BAR -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </div>
+        <div>
+          <div class="title-row">
+            <h1>GEAR DOWN</h1>
+            <span class="live-dot" id="liveDot"></span>
+          </div>
+          <p class="subtitle">HARDWARE THERMAL & CLOCK GOVERNOR</p>
+        </div>
+      </div>
+      <div class="gpu-badge" id="gpuNameBadge">DETECTING GPU...</div>
+    </header>
+
+    <!-- STATUS NOTIFICATION BANNER -->
+    <div id="statusBanner" class="status-banner hidden">SYSTEM: READY</div>
+
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main class="main-content">
+
+      <!-- 1. LIVE TELEMETRY RING GAUGE CARD -->
+      <section class="card telemetry-card">
+        <div class="gauge-container">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="68"></circle>
+            <circle class="gauge-progress" id="tempGaugeArc" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="427"></circle>
+          </svg>
+          <div class="gauge-center">
+            <div class="temp-value" id="tempVal">--</div>
+            <div class="temp-unit">°C</div>
+            <div class="gauge-label">LIVE TEMP</div>
+          </div>
+        </div>
+        <div class="telemetry-info">
+          <div class="telemetry-stat">
+            <span class="stat-label">GOVERNOR STATE</span>
+            <span class="stat-value" id="statGovState">ACTIVE</span>
+          </div>
+          <div class="telemetry-stat">
+            <span class="stat-label">ACTIVE CLOCK CAP</span>
+            <span class="stat-value highlight" id="statActiveClock">-- MHz</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. CPU POWER LIMIT -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFB300" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M20 15h2M20 9h2M2 15h2M2 9h2"/></svg>
+            <span>CPU POWER STATE LIMIT</span>
+          </div>
+          <span class="value-badge amber" id="cpuValBadge">100 %</span>
+        </div>
+        <p class="card-desc">Caps maximum processor scaling percentage.</p>
+        <div class="slider-wrapper">
+          <input type="range" id="cpuSlider" min="50" max="100" value="100" step="1" class="slider amber-slider">
+        </div>
+      </section>
+
+      <!-- 3. GPU CONTROL GOVERNOR -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00E676" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>GPU CONTROL GOVERNOR</span>
+          </div>
+        </div>
+
+        <!-- SEGMENTED MODE TOGGLE -->
+        <div class="segmented-control">
+          <button type="button" class="segment-btn active" id="btnFixedMode">Fixed Clock Cap</button>
+          <button type="button" class="segment-btn" id="btnTempMode">Dynamic Temp Lock</button>
+        </div>
+
+        <!-- FIXED FREQ PANEL -->
+        <div id="fixedPanel" class="mode-panel">
+          <div class="card-header">
+            <span class="sub-label">CLOCK LIMIT</span>
+            <span class="value-badge green" id="freqValBadge">1800 MHz</span>
+          </div>
+          <p class="card-desc">Sets max GPU clock frequency limit.</p>
+          <div class="slider-wrapper">
+            <input type="range" id="freqSlider" min="210" max="3500" value="1800" step="10" class="slider green-slider">
+          </div>
+        </div>
+
+        <!-- DYNAMIC TEMP LOCK PANEL -->
+        <div id="tempPanel" class="mode-panel hidden">
+          <div class="card-header">
+            <span class="sub-label">TARGET TEMPERATURE LOCK</span>
+            <span class="value-badge red" id="targetTempValBadge">75 °C</span>
+          </div>
+          <p class="card-desc">Dynamically scales clock limit to lock temperature at target limit.</p>
+          <div class="slider-wrapper">
+            <input type="range" id="targetTempSlider" min="55" max="85" value="75" step="1" class="slider red-slider">
+          </div>
+
+          <div class="card-header" style="margin-top: 14px;">
+            <span class="sub-label">MAX FREQUENCY CEILING</span>
+            <span class="value-badge green" id="maxCapValBadge">2200 MHz</span>
+          </div>
+          <div class="slider-wrapper">
+            <input type="range" id="maxCapSlider" min="800" max="3500" value="2200" step="10" class="slider green-slider">
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. PER-APPLICATION PROFILES -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00F2FE" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+            <span>PER-APP AUTOMATIC PROFILES</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="appGovToggle">
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Auto Mode</span>
+          </label>
+        </div>
+        <p class="card-desc">Auto-applies thermal target lock or clock cap per active application.</p>
+
+        <!-- ACTIVE FOREGROUND WINDOW BANNER -->
+        <div class="focus-banner">
+          <span class="focus-tag">ACTIVE FOCUS</span>
+          <span class="focus-app" id="activeAppText">GLOBAL DEFAULT (NO FOCUS)</span>
+        </div>
+
+        <!-- ADD PROFILE INPUT -->
+        <div class="add-rule-row">
+          <input type="text" id="appExeInput" placeholder="e.g. cyberpunk2077, chrome, msedge" class="dark-input">
+          <button type="button" id="btnAddRule" class="btn-secondary">+ Add Preset Profile</button>
+        </div>
+
+        <!-- APP RULES LIST -->
+        <div id="rulesList" class="rules-list">
+          <!-- Dynamically populated rules -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER ACTION BUTTONS -->
+    <footer class="footer">
+      <button type="button" id="btnApply" class="btn-primary">Apply Settings</button>
+      <button type="button" id="btnReset" class="btn-glass">Restore Defaults</button>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

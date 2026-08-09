@@ -17,7 +17,7 @@ Gear Down was engineered to achieve significant temperature reduction entirely i
 * **Fail-Safe Restoration:** Integrates cleanly with the Windows System Tray. Instantly relinquishes control and restores all hardware to factory default settings the moment the process is terminated.
 
 ## ScreenShots
-<img width="591" height="884" alt="Screenshot 2026-04-02 235744" src="https://github.com/user-attachments/assets/efa6c652-5df9-4853-8f8e-a2ede4dfeb99" />
+<img width="632" height="935" alt="image" src="https://github.com/user-attachments/assets/5492b802-7dd6-44d9-8f18-b6fbc0b13ae0" />
 
 
 ## How to Use (Finding Your Sweet Spot)

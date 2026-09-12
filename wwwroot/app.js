@@ -332,12 +332,19 @@
   });
 
   // Global helper for profile card click handlers
-  window.applyPreset = function (gpuFreq, cpu, gpuMode, targetTemp, maxCapMhz) {
+  window.applyPreset = function (gpuFreq, cpu, gpuMode, targetTemp, maxCapMhz, presetName) {
     state.gpuFreq = gpuFreq;
     state.cpu = cpu;
     state.gpuMode = gpuMode;
     state.targetTemp = targetTemp;
     state.maxCapMhz = maxCapMhz;
+
+    // Synchronize quick-preset pills in top-header
+    if (presetName) {
+      document.querySelectorAll('.quick-preset-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === presetName);
+      });
+    }
 
     applyConfigToUI({
       gpuFreq,
@@ -355,7 +362,8 @@
       maxCapMhz
     });
 
-    showStatus("PRESET PROFILE APPLIED SUCCESSFULLY");
+    const label = presetName ? `${presetName.toUpperCase()} PRESET` : 'PRESET PROFILE';
+    showStatus(`${label} APPLIED SUCCESSFULLY`);
     setTimeout(() => showStatus(""), 3000);
   };
 

@@ -96,6 +96,20 @@
         <div class="header-titles">
           <h1 class="header-title">Dashboard</h1>
         </div>
+        <div class="header-quick-presets">
+          <button type="button" class="quick-preset-pill" data-preset="eco" onclick="applyPreset(1200, 80, 0, 60, 1400, 'eco')" title="1200 MHz · Eco Power">
+            <span class="pill-dot green"></span>Eco
+          </button>
+          <button type="button" class="quick-preset-pill" data-preset="quiet" onclick="applyPreset(1650, 95, 1, 68, 1650, 'quiet')" title="Sub-68°C Temp Lock">
+            <span class="pill-dot amber"></span>Quiet
+          </button>
+          <button type="button" class="quick-preset-pill active" data-preset="balanced" onclick="applyPreset(1800, 100, 0, 75, 2200, 'balanced')" title="1800 MHz · Balanced">
+            <span class="pill-dot green"></span>Balanced
+          </button>
+          <button type="button" class="quick-preset-pill" data-preset="max" onclick="applyPreset(2400, 100, 0, 80, 2600, 'max')" title="2400 MHz · Max Power">
+            <span class="pill-dot red"></span>Max
+          </button>
+        </div>
       </header>
 
       <!-- SYSTEM STATUS BANNER -->
@@ -274,21 +288,21 @@
                   <div><span>CPU Scaling:</span> 100 %</div>
                   <div><span>Mode:</span> Fixed Clock</div>
                 </div>
-                <button type="button" class="btn-preset-apply" onclick="applyPreset(1800, 100, 0, 75, 2200)">Apply
+                <button type="button" class="btn-preset-apply" onclick="applyPreset(1800, 100, 0, 75, 2200, 'balanced')">Apply
                   Profile</button>
               </div>
 
               <div class="preset-card" data-preset="quiet">
                 <div class="preset-header">
                   <span class="preset-title">Quiet & Cool</span>
-                  <span class="preset-pill blue">Sub-65°C</span>
+                  <span class="preset-pill">Sub-68°C</span>
                 </div>
                 <div class="preset-specs">
                   <div><span>Target Temp:</span> 68 °C</div>
                   <div><span>Max Ceiling:</span> 1650 MHz</div>
                   <div><span>Mode:</span> Temp Lock</div>
                 </div>
-                <button type="button" class="btn-preset-apply" onclick="applyPreset(1650, 95, 1, 68, 1650)">Apply
+                <button type="button" class="btn-preset-apply" onclick="applyPreset(1650, 95, 1, 68, 1650, 'quiet')">Apply
                   Profile</button>
               </div>
 
@@ -302,7 +316,7 @@
                   <div><span>CPU Scaling:</span> 100 %</div>
                   <div><span>Mode:</span> Fixed Clock</div>
                 </div>
-                <button type="button" class="btn-preset-apply" onclick="applyPreset(2400, 100, 0, 80, 2600)">Apply
+                <button type="button" class="btn-preset-apply" onclick="applyPreset(2400, 100, 0, 80, 2600, 'max')">Apply
                   Profile</button>
               </div>
 
@@ -316,7 +330,7 @@
                   <div><span>CPU Scaling:</span> 80 %</div>
                   <div><span>Mode:</span> Fixed Clock</div>
                 </div>
-                <button type="button" class="btn-preset-apply" onclick="applyPreset(1200, 80, 0, 60, 1400)">Apply
+                <button type="button" class="btn-preset-apply" onclick="applyPreset(1200, 80, 0, 60, 1400, 'eco')">Apply
                   Profile</button>
               </div>
             </div>

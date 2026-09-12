@@ -98,14 +98,7 @@ namespace GearDown
 
         private void Monitor_Tick(object? sender, EventArgs e)
         {
-            var telemetry = _gpu.GetLiveTelemetry();
-            int currentTemp = telemetry.Temperature > 0 ? telemetry.Temperature : _gpu.GetCurrentTemp();
-
-            if (!string.IsNullOrEmpty(telemetry.GpuName))
-            {
-                _gpuNameCache = telemetry.GpuName;
-            }
-
+            int currentTemp = _gpu.GetCurrentTemp();
             bool profileChanged = _appGovernor.EvaluateForegroundProcess(out var activeProfile, out string processName);
 
             string activeAppDisplay = string.IsNullOrEmpty(processName)
@@ -147,11 +140,11 @@ namespace GearDown
                 activeClockDisplay = $"{_gpu.FixedMaxMhz} MHz";
             }
 
-            // Post telemetry payload to JS Web UI with dynamic GPU metrics
-            SendTelemetryToUI(currentTemp, activeClockDisplay, govStateText, activeAppDisplay, telemetry.Utilization, telemetry.FanSpeed, telemetry.DriverVersion, telemetry.PcieInfo);
+            // Post telemetry payload to JS Web UI
+            SendTelemetryToUI(currentTemp, activeClockDisplay, govStateText, activeAppDisplay);
         }
 
-        private void SendTelemetryToUI(int temp, string activeClock, string govState, string activeApp, int gpuLoad = 0, string fanSpeed = "Auto", string driverVersion = "", string pcieInfo = "")
+        private void SendTelemetryToUI(int temp, string activeClock, string govState, string activeApp)
         {
             if (webView.CoreWebView2 == null) return;
 
@@ -162,11 +155,7 @@ namespace GearDown
                 gpuName = _gpuNameCache,
                 activeClock = activeClock,
                 govState = govState,
-                activeApp = activeApp,
-                gpuLoad = gpuLoad,
-                fanSpeed = fanSpeed,
-                driverVersion = driverVersion,
-                pcieInfo = pcieInfo
+                activeApp = activeApp
             };
 
             webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));

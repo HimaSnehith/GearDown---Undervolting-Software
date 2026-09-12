@@ -2,15 +2,15 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="GearDown"
-        MinWidth="460" MinHeight="680"
-        Width="520" Height="760"
+        Title="GearDown — Hardware Control"
+        MinWidth="780" MinHeight="620"
+        Width="960" Height="720"
         Icon="fan.ico"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
-        Background="#080A0F">
+        Background="#07090E">
 
     <Grid>
-        <wv2:WebView2 x:Name="webView" DefaultBackgroundColor="#080A0F"/>
+        <wv2:WebView2 x:Name="webView" DefaultBackgroundColor="#07090E"/>
     </Grid>
 </Window>

@@ -98,7 +98,14 @@ namespace GearDown
 
         private void Monitor_Tick(object? sender, EventArgs e)
         {
-            int currentTemp = _gpu.GetCurrentTemp();
+            var telemetry = _gpu.GetLiveTelemetry();
+            int currentTemp = telemetry.Temperature > 0 ? telemetry.Temperature : _gpu.GetCurrentTemp();
+
+            if (!string.IsNullOrEmpty(telemetry.GpuName))
+            {
+                _gpuNameCache = telemetry.GpuName;
+            }
+
             bool profileChanged = _appGovernor.EvaluateForegroundProcess(out var activeProfile, out string processName);
 
             string activeAppDisplay = string.IsNullOrEmpty(processName)
@@ -125,20 +132,26 @@ namespace GearDown
                 }
             }
 
-            int activeDynamicMhz = _gpu.FixedMaxMhz;
-            string govStateText = _gpu.Mode == GpuControlMode.TemperatureLock ? $"LOCK @ {_gpu.Governor.TargetTemp}°C" : "FIXED CAP";
+            string activeClockDisplay = "UNCAPPED";
+            string govStateText = "STOCK (UNCAPPED)";
 
             if (_gpu.Mode == GpuControlMode.TemperatureLock)
             {
-                _gpu.ProcessThermalGovernorTick(currentTemp, out activeDynamicMhz);
+                _gpu.ProcessThermalGovernorTick(currentTemp, out int activeDynamicMhz);
                 govStateText = $"LOCK @ {_gpu.Governor.TargetTemp}°C (ACTIVE)";
+                activeClockDisplay = $"{activeDynamicMhz} MHz";
+            }
+            else if (_gpu.Mode == GpuControlMode.FixedFrequency)
+            {
+                govStateText = "FIXED CAP";
+                activeClockDisplay = $"{_gpu.FixedMaxMhz} MHz";
             }
 
-            // Post telemetry payload to JS Web UI
-            SendTelemetryToUI(currentTemp, activeDynamicMhz, govStateText, activeAppDisplay);
+            // Post telemetry payload to JS Web UI with dynamic GPU metrics
+            SendTelemetryToUI(currentTemp, activeClockDisplay, govStateText, activeAppDisplay, telemetry.Utilization, telemetry.FanSpeed, telemetry.DriverVersion, telemetry.PcieInfo);
         }
 
-        private void SendTelemetryToUI(int temp, int activeClock, string govState, string activeApp)
+        private void SendTelemetryToUI(int temp, string activeClock, string govState, string activeApp, int gpuLoad = 0, string fanSpeed = "Auto", string driverVersion = "", string pcieInfo = "")
         {
             if (webView.CoreWebView2 == null) return;
 
@@ -149,7 +162,11 @@ namespace GearDown
                 gpuName = _gpuNameCache,
                 activeClock = activeClock,
                 govState = govState,
-                activeApp = activeApp
+                activeApp = activeApp,
+                gpuLoad = gpuLoad,
+                fanSpeed = fanSpeed,
+                driverVersion = driverVersion,
+                pcieInfo = pcieInfo
             };
 
             webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
@@ -270,7 +287,7 @@ namespace GearDown
                         _maxCapMhz = root.GetProperty("maxCapMhz").GetInt32();
                         int setMode = root.GetProperty("gpuMode").GetInt32();
 
-                        _gpu.Mode = (GpuControlMode)setMode;
+                        _gpu.Mode = setMode == 1 ? GpuControlMode.TemperatureLock : GpuControlMode.FixedFrequency;
                         _cpu.SetThrottleLevel(_cpuState);
 
                         if (_gpu.Mode == GpuControlMode.FixedFrequency)
@@ -297,12 +314,12 @@ namespace GearDown
                         _fixedFreqMhz = 1800;
                         _targetTempC = 75;
                         _maxCapMhz = 2200;
-                        _gpu.Mode = GpuControlMode.FixedFrequency;
+                        _gpu.Mode = GpuControlMode.Disabled;
                         _appGovernor.IsEnabled = false;
                         _appGovernor.Profiles.Clear();
 
                         SendConfigToUI();
-                        SendStatusToUI("RESTORED FACTORY DEFAULTS");
+                        SendStatusToUI("RESTORED STOCK FACTORY DEFAULTS");
                         break;
                 }
             }
@@ -340,7 +357,7 @@ namespace GearDown
                         {
                             _gpu.Governor.Initialize(_targetTempC, Math.Min(1500, _maxCapMhz), _maxCapMhz);
                         }
-                        else
+                        else if (_gpu.Mode == GpuControlMode.FixedFrequency)
                         {
                             _gpu.SetClockLimit(_fixedFreqMhz);
                         }

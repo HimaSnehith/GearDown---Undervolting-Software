@@ -100,7 +100,7 @@
           <button type="button" class="quick-preset-pill" data-preset="quiet" onclick="applyPreset(1650, 95, 1, 68, 1650, 'quiet')" title="Sub-68°C Temp Lock">
             <span class="pill-dot amber"></span>Quiet
           </button>
-          <button type="button" class="quick-preset-pill active" data-preset="balanced" onclick="applyPreset(1800, 100, 0, 75, 2200, 'balanced')" title="1800 MHz · Balanced">
+          <button type="button" class="quick-preset-pill" data-preset="balanced" onclick="applyPreset(1800, 100, 0, 75, 2200, 'balanced')" title="1800 MHz · Balanced">
             <span class="pill-dot green"></span>Balanced
           </button>
           <button type="button" class="quick-preset-pill" data-preset="max" onclick="applyPreset(2400, 100, 0, 80, 2600, 'max')" title="2400 MHz · High Performance">
@@ -344,11 +344,11 @@
 
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-title">Minimize to System Tray on Close</div>
-                  <div class="setting-desc">Keep thermal governor active in background when main window is closed.</div>
+                  <div class="setting-title">Fail-Safe Hardware Reset on Exit</div>
+                  <div class="setting-desc">Closing GearDown immediately restores GPU clocks and CPU scaling to factory stock to guarantee hardware safety.</div>
                 </div>
                 <label class="fluent-toggle">
-                  <input type="checkbox" checked>
+                  <input type="checkbox" checked disabled>
                   <span class="toggle-track"></span>
                 </label>
               </div>

@@ -20,7 +20,7 @@ namespace GearDown.Core
         {
             try
             {
-                Process p = new Process();
+                using var p = new Process();
                 p.StartInfo.FileName = "powercfg";
                 p.StartInfo.Arguments = arguments;
                 p.StartInfo.UseShellExecute = false;

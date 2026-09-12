@@ -10,6 +10,13 @@ namespace GearDown.Core
         TemperatureLock = 2  // Dynamic Temperature Lock
     }
 
+    public struct GpuTelemetry
+    {
+        public int Temperature;
+        public int CurrentClockMhz;
+        public string GpuName;
+    }
+
     public class GpuController
     {
         public bool IsNvidiaAvailable { get; private set; } = true;
@@ -17,11 +24,29 @@ namespace GearDown.Core
         public ThermalGovernor Governor { get; } = new ThermalGovernor();
         public int FixedMaxMhz { get; private set; } = 1800;
 
+        public GpuTelemetry GetTelemetry()
+        {
+            string output = RunNvidiaCommand("--query-gpu=temperature.gpu,clocks.current.graphics,name --format=csv,noheader,nounits");
+            var result = new GpuTelemetry { Temperature = 0, CurrentClockMhz = 0, GpuName = "NVIDIA GPU" };
+
+            if (string.IsNullOrWhiteSpace(output) || output == "ERROR") return result;
+
+            var parts = output.Split(',');
+            if (parts.Length >= 2)
+            {
+                if (int.TryParse(parts[0].Trim(), out int temp)) result.Temperature = temp;
+                if (int.TryParse(parts[1].Trim(), out int clk)) result.CurrentClockMhz = clk;
+            }
+            if (parts.Length >= 3)
+            {
+                result.GpuName = parts[2].Trim();
+            }
+            return result;
+        }
+
         public int GetCurrentTemp()
         {
-            string output = RunNvidiaCommand("--query-gpu=temperature.gpu --format=csv,noheader,nounits");
-            if (int.TryParse(output, out int temp)) return temp;
-            return 0;
+            return GetTelemetry().Temperature;
         }
 
         public string SetClockLimit(int maxMhz)

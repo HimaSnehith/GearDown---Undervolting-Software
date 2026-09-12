@@ -6,8 +6,7 @@
     gpuFreq: 1800,
     targetTemp: 75,
     maxCapMhz: 2200,
-    appGovEnabled: false,
-    appProfiles: []
+    profiles: []
   };
 
   // DOM Elements
@@ -16,14 +15,9 @@
     tempGaugeArc: document.getElementById('tempGaugeArc'),
     statGovState: document.getElementById('statGovState'),
     statActiveClock: document.getElementById('statActiveClock'),
-    statGpuLoad: document.getElementById('statGpuLoad'),
-    statFanSpeed: document.getElementById('statFanSpeed'),
     gpuNameBadge: document.getElementById('gpuNameBadge'),
     gpuVendorBadge: document.getElementById('gpuVendorBadge'),
-    driverBadge: document.getElementById('driverBadge'),
-    pcieBadge: document.getElementById('pcieBadge'),
     statusBanner: document.getElementById('statusBanner'),
-    liveDot: document.getElementById('liveDot'),
 
     cpuSlider: document.getElementById('cpuSlider'),
     cpuValBadge: document.getElementById('cpuValBadge'),
@@ -42,11 +36,11 @@
     maxCapSlider: document.getElementById('maxCapSlider'),
     maxCapValBadge: document.getElementById('maxCapValBadge'),
 
-    appGovToggle: document.getElementById('appGovToggle'),
-    activeAppText: document.getElementById('activeAppText'),
-    appExeInput: document.getElementById('appExeInput'),
-    btnAddRule: document.getElementById('btnAddRule'),
-    rulesList: document.getElementById('rulesList'),
+    customProfileInput: document.getElementById('customProfileInput'),
+    btnSaveCustomProfile: document.getElementById('btnSaveCustomProfile'),
+    customProfilesList: document.getElementById('customProfilesList'),
+    customProfilesCountBadge: document.getElementById('customProfilesCountBadge'),
+    navProfilesBadge: document.querySelector('.nav-item[data-tab="profiles"] .nav-badge'),
 
     btnApply: document.getElementById('btnApply'),
     btnReset: document.getElementById('btnReset')
@@ -155,7 +149,6 @@
         : `${clockStr} MHz`;
     }
     if (data.govState && el.statGovState) el.statGovState.textContent = data.govState;
-    if (data.activeApp && el.activeAppText) el.activeAppText.textContent = data.activeApp;
   }
 
   // --- SLIDER STYLING ---
@@ -200,13 +193,9 @@
       el.maxCapValBadge.textContent = `${cfg.maxCapMhz} MHz`;
       state.maxCapMhz = cfg.maxCapMhz;
     }
-    if (cfg.appGovEnabled !== undefined) {
-      el.appGovToggle.checked = cfg.appGovEnabled;
-      state.appGovEnabled = cfg.appGovEnabled;
-    }
-    if (cfg.appProfiles) {
-      state.appProfiles = cfg.appProfiles;
-      renderRulesList();
+    if (cfg.profiles) {
+      state.profiles = cfg.profiles;
+      renderCustomProfilesList();
     }
     updateAllSliderTracks();
   }
@@ -235,33 +224,74 @@
     el.statusBanner.classList.remove('hidden');
   }
 
-  function renderRulesList() {
-    el.rulesList.innerHTML = '';
-    if (!state.appProfiles || state.appProfiles.length === 0) {
-      el.rulesList.innerHTML = '<div style="font-size:11px; color:var(--text-muted); padding:6px;">No app profiles added yet.</div>';
+  // --- CUSTOM PROFILES RENDERING ---
+  function renderCustomProfilesList() {
+    if (!el.customProfilesList) return;
+    el.customProfilesList.innerHTML = '';
+
+    const count = state.profiles ? state.profiles.length : 0;
+    if (el.customProfilesCountBadge) {
+      el.customProfilesCountBadge.textContent = `${count} ${count === 1 ? 'Profile' : 'Profiles'}`;
+    }
+    if (el.navProfilesBadge) {
+      el.navProfilesBadge.textContent = (count + 3).toString(); // 3 presets + custom
+    }
+
+    if (!state.profiles || state.profiles.length === 0) {
+      el.customProfilesList.innerHTML = `
+        <div style="grid-column: 1 / -1; font-size: 11.5px; color: var(--text-muted); padding: 18px; text-align: center; background: rgba(6, 10, 8, 0.4); border-radius: var(--radius-sm); border: 1px dashed var(--border-glass);">
+          No custom profiles saved yet. Set your sliders on the dashboard and save your first profile above!
+        </div>
+      `;
       return;
     }
 
-    state.appProfiles.forEach((profile, index) => {
-      const item = document.createElement('div');
-      item.className = 'rule-item';
+    state.profiles.forEach((profile) => {
+      const card = document.createElement('div');
+      card.className = 'custom-profile-card';
 
-      const summary = profile.Mode === 1
-        ? `TEMP LOCK ${profile.TargetTemp}°C (${profile.MaxMhz} MHz)`
-        : `FIXED CAP ${profile.MaxMhz} MHz`;
+      const isTempLock = profile.GpuMode === 1;
+      const modeLabel = isTempLock ? 'Dynamic Temp Lock' : 'Fixed Clock';
+      const targetDetail = isTempLock
+        ? `<div><span>Target Temp:</span> ${profile.TargetTemp} °C</div><div><span>Max Cap:</span> ${profile.MaxCapMhz} MHz</div>`
+        : `<div><span>Clock Cap:</span> ${profile.GpuFreq} MHz</div>`;
 
-      item.innerHTML = `
-        <span class="rule-name">${profile.ProcessName.toUpperCase()}</span>
-        <span class="rule-summary">${summary}</span>
-        <button class="btn-del" data-index="${index}">✕</button>
+      card.innerHTML = `
+        <div class="custom-profile-header">
+          <span class="custom-profile-title">${escapeHtml(profile.Name)}</span>
+          <div class="custom-profile-actions">
+            <button type="button" class="btn-card-del" title="Delete Profile" data-name="${escapeHtml(profile.Name)}">✕</button>
+          </div>
+        </div>
+        <div class="custom-profile-specs">
+          <div><span>Mode:</span> ${modeLabel}</div>
+          ${targetDetail}
+          <div><span>CPU Scaling:</span> ${profile.Cpu} %</div>
+        </div>
+        <button type="button" class="btn-preset-apply" data-apply="true">Apply Profile</button>
       `;
 
-      item.querySelector('.btn-del').addEventListener('click', () => {
-        sendToHost('deleteRule', { index, processName: profile.ProcessName });
+      card.querySelector('[data-apply="true"]').addEventListener('click', () => {
+        window.applyPreset(profile.GpuFreq, profile.Cpu, profile.GpuMode, profile.TargetTemp, profile.MaxCapMhz, profile.Name);
       });
 
-      el.rulesList.appendChild(item);
+      card.querySelector('.btn-card-del').addEventListener('click', () => {
+        sendToHost('deleteProfile', { name: profile.Name });
+      });
+
+      el.customProfilesList.appendChild(card);
     });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[m]));
   }
 
   // --- EVENT LISTENERS ---
@@ -299,23 +329,38 @@
     sendToHost('setGpuMode', { mode: 1 });
   });
 
-  el.appGovToggle.addEventListener('change', (e) => {
-    state.appGovEnabled = e.target.checked;
-    sendToHost('toggleAppGov', { enabled: e.target.checked });
-  });
+  // Save Custom Profile Button handler
+  function saveCurrentProfile() {
+    const name = el.customProfileInput ? el.customProfileInput.value.trim() : '';
+    if (!name) {
+      showStatus("PLEASE ENTER A PROFILE NAME");
+      setTimeout(() => showStatus(""), 2500);
+      return;
+    }
 
-  el.btnAddRule.addEventListener('click', () => {
-    const exe = el.appExeInput.value.trim();
-    if (!exe) return;
-    sendToHost('addRule', {
-      exe: exe,
-      mode: state.gpuMode,
+    sendToHost('saveProfile', {
+      name: name,
+      cpu: state.cpu,
+      gpuMode: state.gpuMode,
+      gpuFreq: state.gpuFreq,
       targetTemp: state.targetTemp,
-      maxMhz: state.gpuMode === 1 ? state.maxCapMhz : state.gpuFreq,
-      cpuThrottle: state.cpu
+      maxCapMhz: state.maxCapMhz
     });
-    el.appExeInput.value = '';
-  });
+
+    if (el.customProfileInput) el.customProfileInput.value = '';
+  }
+
+  if (el.btnSaveCustomProfile) {
+    el.btnSaveCustomProfile.addEventListener('click', saveCurrentProfile);
+  }
+
+  if (el.customProfileInput) {
+    el.customProfileInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        saveCurrentProfile();
+      }
+    });
+  }
 
   el.btnApply.addEventListener('click', () => {
     sendToHost('apply', {
@@ -342,7 +387,7 @@
     // Synchronize quick-preset pills in top-header
     if (presetName) {
       document.querySelectorAll('.quick-preset-pill').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-preset') === presetName);
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === presetName.toLowerCase());
       });
     }
 
@@ -362,7 +407,7 @@
       maxCapMhz
     });
 
-    const label = presetName ? `${presetName.toUpperCase()} PRESET` : 'PRESET PROFILE';
+    const label = presetName ? `"${presetName.toUpperCase()}" PROFILE` : 'PRESET PROFILE';
     showStatus(`${label} APPLIED SUCCESSFULLY`);
     setTimeout(() => showStatus(""), 3000);
   };

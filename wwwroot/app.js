@@ -168,6 +168,24 @@
     updateSliderTrack(el.maxCapSlider, '#00E676');
   }
 
+  function syncHeaderPresetPill(forcedPresetName = null) {
+    let matchedPreset = forcedPresetName ? forcedPresetName.toLowerCase() : null;
+
+    if (!matchedPreset) {
+      if (state.gpuMode === 1 && state.targetTemp === 68 && state.maxCapMhz === 1650 && state.cpu === 95) {
+        matchedPreset = 'quiet';
+      } else if (state.gpuMode === 0 && state.gpuFreq === 1800 && state.cpu === 100) {
+        matchedPreset = 'balanced';
+      } else if (state.gpuMode === 0 && state.gpuFreq === 2400 && state.cpu === 100) {
+        matchedPreset = 'max';
+      }
+    }
+
+    document.querySelectorAll('.quick-preset-pill').forEach(btn => {
+      btn.classList.toggle('active', Boolean(matchedPreset && btn.getAttribute('data-preset') === matchedPreset));
+    });
+  }
+
   // --- CONFIG APPLIER ---
   function applyConfigToUI(cfg) {
     if (cfg.cpu !== undefined) {
@@ -198,6 +216,7 @@
       renderCustomProfilesList();
     }
     updateAllSliderTracks();
+    syncHeaderPresetPill();
   }
 
   function setGpuModeUI(mode) {
@@ -299,33 +318,39 @@
     el.cpuValBadge.textContent = `${e.target.value} %`;
     state.cpu = parseInt(e.target.value);
     updateSliderTrack(el.cpuSlider, '#FFB300');
+    syncHeaderPresetPill();
   });
 
   el.freqSlider.addEventListener('input', (e) => {
     el.freqValBadge.textContent = `${e.target.value} MHz`;
     state.gpuFreq = parseInt(e.target.value);
     updateSliderTrack(el.freqSlider, '#00E676');
+    syncHeaderPresetPill();
   });
 
   el.targetTempSlider.addEventListener('input', (e) => {
     el.targetTempValBadge.textContent = `${e.target.value} °C`;
     state.targetTemp = parseInt(e.target.value);
     updateSliderTrack(el.targetTempSlider, '#FF5252');
+    syncHeaderPresetPill();
   });
 
   el.maxCapSlider.addEventListener('input', (e) => {
     el.maxCapValBadge.textContent = `${e.target.value} MHz`;
     state.maxCapMhz = parseInt(e.target.value);
     updateSliderTrack(el.maxCapSlider, '#00E676');
+    syncHeaderPresetPill();
   });
 
   el.btnFixedMode.addEventListener('click', () => {
     setGpuModeUI(0);
+    syncHeaderPresetPill();
     sendToHost('setGpuMode', { mode: 0 });
   });
 
   el.btnTempMode.addEventListener('click', () => {
     setGpuModeUI(1);
+    syncHeaderPresetPill();
     sendToHost('setGpuMode', { mode: 1 });
   });
 

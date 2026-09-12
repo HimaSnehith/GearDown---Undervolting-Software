@@ -84,7 +84,7 @@ namespace GearDown.Core
         {
             try
             {
-                Process p = new Process();
+                using var p = new Process();
                 p.StartInfo.FileName = "nvidia-smi";
                 p.StartInfo.Arguments = arguments;
                 p.StartInfo.UseShellExecute = false;

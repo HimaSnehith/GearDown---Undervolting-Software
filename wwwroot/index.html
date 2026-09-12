@@ -91,21 +91,42 @@
     <!-- MAIN VIEW CONTAINER -->
     <div class="main-wrapper">
 
-      <!-- TOP HEADER BAR -->
+      <!-- TOP HEADER BAR WITH CLEAN HARDWARE TELEMETRY -->
       <header class="top-header">
         <div class="header-titles">
-          <h1 class="header-title">Dashboard</h1>
+          <h1 class="header-title" id="pageHeaderTitle">Dashboard</h1>
         </div>
-        <div class="header-quick-presets">
-          <button type="button" class="quick-preset-pill" data-preset="quiet" onclick="applyPreset(1650, 95, 1, 68, 1650, 'quiet')" title="Sub-68°C Temp Lock">
-            <span class="pill-dot amber"></span>Quiet
-          </button>
-          <button type="button" class="quick-preset-pill" data-preset="balanced" onclick="applyPreset(1800, 100, 0, 75, 2200, 'balanced')" title="1800 MHz · Balanced">
-            <span class="pill-dot green"></span>Balanced
-          </button>
-          <button type="button" class="quick-preset-pill" data-preset="max" onclick="applyPreset(2400, 100, 0, 80, 2600, 'max')" title="2400 MHz · High Performance">
-            <span class="pill-dot red"></span>High Perf
-          </button>
+        <div class="header-hw-bar">
+          <div class="hw-stat-item" title="Real-Time GPU Core Power Draw">
+            <svg class="hw-stat-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span class="hw-stat-label">PWR</span>
+            <span class="hw-stat-val" id="powerVal">-- W</span>
+          </div>
+
+          <div class="hw-stat-divider"></div>
+
+          <div class="hw-stat-item" title="Allocated GDDR6 VRAM Usage">
+            <svg class="hw-stat-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+              <line x1="6" y1="6" x2="6.01" y2="6"/>
+              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            </svg>
+            <span class="hw-stat-label">VRAM</span>
+            <span class="hw-stat-val" id="vramVal">-- GB</span>
+          </div>
+
+          <div class="hw-stat-divider"></div>
+
+          <div class="hw-stat-item" title="NVIDIA Display Driver Version">
+            <svg class="hw-stat-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span class="hw-stat-label">DRIVER</span>
+            <span class="hw-stat-val" id="driverVal">--</span>
+          </div>
         </div>
       </header>
 

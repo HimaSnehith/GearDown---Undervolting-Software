@@ -14,6 +14,10 @@ namespace GearDown.Core
     {
         public int Temperature;
         public int CurrentClockMhz;
+        public string DriverVersion;
+        public double PowerDrawWatts;
+        public int VramUsedMb;
+        public int VramTotalMb;
         public string GpuName;
     }
 
@@ -26,20 +30,30 @@ namespace GearDown.Core
 
         public GpuTelemetry GetTelemetry()
         {
-            string output = RunNvidiaCommand("--query-gpu=temperature.gpu,clocks.current.graphics,name --format=csv,noheader,nounits");
-            var result = new GpuTelemetry { Temperature = 0, CurrentClockMhz = 0, GpuName = "NVIDIA GPU" };
+            string output = RunNvidiaCommand("--query-gpu=temperature.gpu,clocks.current.graphics,driver_version,power.draw,memory.used,memory.total,name --format=csv,noheader,nounits");
+            var result = new GpuTelemetry
+            {
+                Temperature = 0,
+                CurrentClockMhz = 0,
+                DriverVersion = "--",
+                PowerDrawWatts = 0,
+                VramUsedMb = 0,
+                VramTotalMb = 0,
+                GpuName = "NVIDIA GPU"
+            };
 
             if (string.IsNullOrWhiteSpace(output) || output == "ERROR") return result;
 
             var parts = output.Split(',');
-            if (parts.Length >= 2)
+            if (parts.Length >= 7)
             {
                 if (int.TryParse(parts[0].Trim(), out int temp)) result.Temperature = temp;
                 if (int.TryParse(parts[1].Trim(), out int clk)) result.CurrentClockMhz = clk;
-            }
-            if (parts.Length >= 3)
-            {
-                result.GpuName = parts[2].Trim();
+                result.DriverVersion = parts[2].Trim();
+                if (double.TryParse(parts[3].Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double pwr)) result.PowerDrawWatts = pwr;
+                if (int.TryParse(parts[4].Trim(), out int vUsed)) result.VramUsedMb = vUsed;
+                if (int.TryParse(parts[5].Trim(), out int vTotal)) result.VramTotalMb = vTotal;
+                result.GpuName = parts[6].Trim();
             }
             return result;
         }

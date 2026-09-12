@@ -296,64 +296,52 @@ body {
   letter-spacing: -0.3px;
 }
 
-/* HEADER QUICK PRESETS */
-.header-quick-presets {
+/* UNIFIED HARDWARE TELEMETRY BAR */
+.header-hw-bar {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(6, 10, 8, 0.65);
+  background: rgba(8, 14, 10, 0.7);
   border: 1px solid var(--border-glass);
-  padding: 3px 4px;
   border-radius: 20px;
+  padding: 5px 14px;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
 }
 
-.quick-preset-pill {
+.hw-stat-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 14px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-secondary);
-  font-family: var(--font-main);
-  font-size: 11px;
+  gap: 6px;
+  user-select: none;
+}
+
+.hw-stat-icon {
+  stroke: var(--accent-green);
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.hw-stat-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.hw-stat-val {
+  font-size: 11.5px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.quick-preset-pill:hover {
-  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.1px;
 }
 
-.quick-preset-pill.active {
-  background: rgba(0, 230, 118, 0.16);
-  border-color: rgba(0, 230, 118, 0.35);
-  color: var(--accent-green);
-  box-shadow: 0 2px 8px rgba(0, 230, 118, 0.2);
-}
-
-.pill-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-}
-
-.pill-dot.green {
-  background: var(--accent-green);
-  box-shadow: 0 0 6px var(--accent-green-glow);
-}
-
-.pill-dot.amber {
-  background: var(--status-amber);
-  box-shadow: 0 0 6px rgba(255, 179, 0, 0.6);
-}
-
-.pill-dot.red {
-  background: var(--status-red);
-  box-shadow: 0 0 6px rgba(255, 82, 82, 0.6);
+.hw-stat-divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* STATUS BANNER */

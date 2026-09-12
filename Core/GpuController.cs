@@ -10,17 +10,6 @@ namespace GearDown.Core
         TemperatureLock = 2  // Dynamic Temperature Lock
     }
 
-    public class GpuTelemetry
-    {
-        public int Temperature { get; set; }
-        public int Utilization { get; set; }
-        public string FanSpeed { get; set; } = "Auto";
-        public int CurrentClockMhz { get; set; }
-        public string GpuName { get; set; } = "";
-        public string DriverVersion { get; set; } = "";
-        public string PcieInfo { get; set; } = "";
-    }
-
     public class GpuController
     {
         public bool IsNvidiaAvailable { get; private set; } = true;
@@ -33,41 +22,6 @@ namespace GearDown.Core
             string output = RunNvidiaCommand("--query-gpu=temperature.gpu --format=csv,noheader,nounits");
             if (int.TryParse(output, out int temp)) return temp;
             return 0;
-        }
-
-        public GpuTelemetry GetLiveTelemetry()
-        {
-            var telemetry = new GpuTelemetry();
-            string output = RunNvidiaCommand("--query-gpu=name,driver_version,temperature.gpu,utilization.gpu,fan.speed,clocks.current.graphics,pcie.link.gen.current,pcie.link.width.current --format=csv,noheader,nounits");
-            if (!string.IsNullOrEmpty(output) && output != "ERROR")
-            {
-                var parts = output.Split(',');
-                if (parts.Length >= 4)
-                {
-                    telemetry.GpuName = parts[0].Trim();
-                    telemetry.DriverVersion = parts[1].Trim();
-                    if (int.TryParse(parts[2].Trim(), out int temp)) telemetry.Temperature = temp;
-                    if (int.TryParse(parts[3].Trim(), out int util)) telemetry.Utilization = util;
-
-                    if (parts.Length >= 5)
-                    {
-                        string fan = parts[4].Trim();
-                        telemetry.FanSpeed = (fan.Contains("N/A") || string.IsNullOrEmpty(fan)) ? "Auto" : $"{fan}%";
-                    }
-                    if (parts.Length >= 6 && int.TryParse(parts[5].Trim(), out int clock))
-                    {
-                        telemetry.CurrentClockMhz = clock;
-                    }
-                    if (parts.Length >= 8)
-                    {
-                        string gen = parts[6].Trim();
-                        string width = parts[7].Trim();
-                        if (!gen.Contains("N/A") && !width.Contains("N/A"))
-                            telemetry.PcieInfo = $"PCIe {gen}.0 x{width}";
-                    }
-                }
-            }
-            return telemetry;
         }
 
         public string SetClockLimit(int maxMhz)

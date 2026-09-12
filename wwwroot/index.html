@@ -96,15 +96,6 @@
         <div class="header-titles">
           <h1 class="header-title">Dashboard</h1>
         </div>
-        <div class="header-meta">
-          <div class="meta-pill">
-            <span class="meta-dot"></span>
-            <span class="meta-text" id="pcieBadge">PCIe --</span>
-          </div>
-          <div class="meta-pill">
-            <span class="meta-text" id="driverBadge">Driver --</span>
-          </div>
-        </div>
       </header>
 
       <!-- SYSTEM STATUS BANNER -->
@@ -127,7 +118,7 @@
                 </svg>
                 <div class="gauge-center">
                   <div class="temp-readout">
-                    <span class="temp-value" id="tempVal">45</span>
+                    <span class="temp-value" id="tempVal">--</span>
                     <span class="temp-unit">°C</span>
                   </div>
                   <span class="gauge-caption">GPU TEMP</span>
@@ -139,19 +130,11 @@
               <div class="telemetry-grid">
                 <div class="stat-box">
                   <span class="stat-label">GOVERNOR STATE</span>
-                  <span class="stat-value" id="statGovState">Fixed Cap</span>
+                  <span class="stat-value" id="statGovState">ACTIVE</span>
                 </div>
                 <div class="stat-box">
                   <span class="stat-label">ACTIVE CLOCK CAP</span>
-                  <span class="stat-value highlight" id="statActiveClock">1800 MHz</span>
-                </div>
-                <div class="stat-box">
-                  <span class="stat-label">GPU LOAD</span>
-                  <span class="stat-value" id="statGpuLoad">34 %</span>
-                </div>
-                <div class="stat-box">
-                  <span class="stat-label">FAN SPEED</span>
-                  <span class="stat-value" id="statFanSpeed">1420 RPM</span>
+                  <span class="stat-value highlight" id="statActiveClock">-- MHz</span>
                 </div>
               </div>
             </div>

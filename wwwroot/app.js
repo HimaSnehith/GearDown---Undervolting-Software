@@ -148,12 +148,6 @@
       if (el.gpuVendorBadge) el.gpuVendorBadge.textContent = parsed.vendor;
       if (el.gpuNameBadge) el.gpuNameBadge.textContent = parsed.model;
     }
-    if (data.driverVersion && el.driverBadge) {
-      el.driverBadge.textContent = `Driver ${data.driverVersion}`;
-    }
-    if (data.pcieInfo && el.pcieBadge) {
-      el.pcieBadge.textContent = data.pcieInfo;
-    }
     if (data.activeClock && el.statActiveClock) {
       const clockStr = data.activeClock.toString();
       el.statActiveClock.textContent = (clockStr.includes('MHz') || clockStr.includes('UNCAPPED') || clockStr.includes('STOCK'))
@@ -162,14 +156,6 @@
     }
     if (data.govState && el.statGovState) el.statGovState.textContent = data.govState;
     if (data.activeApp && el.activeAppText) el.activeAppText.textContent = data.activeApp;
-
-    // Real dynamic load & fan speed
-    if (data.gpuLoad !== undefined && el.statGpuLoad) {
-      el.statGpuLoad.textContent = `${data.gpuLoad} %`;
-    }
-    if (data.fanSpeed && el.statFanSpeed) {
-      el.statFanSpeed.textContent = data.fanSpeed;
-    }
   }
 
   // --- SLIDER STYLING ---

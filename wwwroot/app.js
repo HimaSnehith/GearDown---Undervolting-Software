@@ -19,6 +19,13 @@
     gpuVendorBadge: document.getElementById('gpuVendorBadge'),
     statusBanner: document.getElementById('statusBanner'),
 
+    // Hardware Telemetry Chips
+    pcieVal: document.getElementById('pcieVal'),
+    powerVal: document.getElementById('powerVal'),
+    pstateVal: document.getElementById('pstateVal'),
+    vramVal: document.getElementById('vramVal'),
+    driverVal: document.getElementById('driverVal'),
+
     cpuSlider: document.getElementById('cpuSlider'),
     cpuValBadge: document.getElementById('cpuValBadge'),
 
@@ -149,6 +156,11 @@
         : `${clockStr} MHz`;
     }
     if (data.govState && el.statGovState) el.statGovState.textContent = data.govState;
+
+    // Update Header Hardware Telemetry
+    if (data.power && el.powerVal) el.powerVal.textContent = data.power;
+    if (data.vram && el.vramVal) el.vramVal.textContent = data.vram;
+    if (data.driver && el.driverVal) el.driverVal.textContent = data.driver;
   }
 
   // --- SLIDER STYLING ---
@@ -166,24 +178,6 @@
     updateSliderTrack(el.freqSlider, '#00E676');
     updateSliderTrack(el.targetTempSlider, '#FF5252');
     updateSliderTrack(el.maxCapSlider, '#00E676');
-  }
-
-  function syncHeaderPresetPill(forcedPresetName = null) {
-    let matchedPreset = forcedPresetName ? forcedPresetName.toLowerCase() : null;
-
-    if (!matchedPreset) {
-      if (state.gpuMode === 1 && state.targetTemp === 68 && state.maxCapMhz === 1650 && state.cpu === 95) {
-        matchedPreset = 'quiet';
-      } else if (state.gpuMode === 0 && state.gpuFreq === 1800 && state.cpu === 100) {
-        matchedPreset = 'balanced';
-      } else if (state.gpuMode === 0 && state.gpuFreq === 2400 && state.cpu === 100) {
-        matchedPreset = 'max';
-      }
-    }
-
-    document.querySelectorAll('.quick-preset-pill').forEach(btn => {
-      btn.classList.toggle('active', Boolean(matchedPreset && btn.getAttribute('data-preset') === matchedPreset));
-    });
   }
 
   // --- CONFIG APPLIER ---
@@ -216,7 +210,6 @@
       renderCustomProfilesList();
     }
     updateAllSliderTracks();
-    syncHeaderPresetPill();
   }
 
   function setGpuModeUI(mode) {
@@ -408,13 +401,6 @@
     state.gpuMode = gpuMode;
     state.targetTemp = targetTemp;
     state.maxCapMhz = maxCapMhz;
-
-    // Synchronize quick-preset pills in top-header
-    if (presetName) {
-      document.querySelectorAll('.quick-preset-pill').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-preset') === presetName.toLowerCase());
-      });
-    }
 
     applyConfigToUI({
       gpuFreq,

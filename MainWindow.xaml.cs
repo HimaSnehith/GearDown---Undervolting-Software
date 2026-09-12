@@ -121,11 +121,23 @@ namespace GearDown
 
             string currentClockDisplay = currentClockMhz > 0 ? $"{currentClockMhz} MHz" : "-- MHz";
 
+            string powerDisplay = telemetry.PowerDrawWatts > 0
+                ? $"{telemetry.PowerDrawWatts:0.0} W"
+                : "-- W";
+
+            string vramDisplay = (telemetry.VramTotalMb > 0)
+                ? $"{(telemetry.VramUsedMb / 1024.0):0.1} / {Math.Round(telemetry.VramTotalMb / 1024.0)} GB"
+                : "-- GB";
+
+            string driverDisplay = !string.IsNullOrEmpty(telemetry.DriverVersion) && telemetry.DriverVersion != "--"
+                ? $"v{telemetry.DriverVersion}"
+                : "--";
+
             // Post telemetry payload to JS Web UI
-            SendTelemetryToUI(currentTemp, currentClockDisplay, govStateText);
+            SendTelemetryToUI(currentTemp, currentClockDisplay, govStateText, powerDisplay, vramDisplay, driverDisplay);
         }
 
-        private void SendTelemetryToUI(int temp, string activeClock, string govState)
+        private void SendTelemetryToUI(int temp, string activeClock, string govState, string power, string vram, string driver)
         {
             if (webView.CoreWebView2 == null) return;
 
@@ -135,7 +147,10 @@ namespace GearDown
                 temp = temp,
                 gpuName = _gpuNameCache,
                 activeClock = activeClock,
-                govState = govState
+                govState = govState,
+                power = power,
+                vram = vram,
+                driver = driver
             };
 
             webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));

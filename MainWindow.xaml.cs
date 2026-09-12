@@ -19,7 +19,7 @@ namespace GearDown
     {
         private GpuController _gpu = new GpuController();
         private CpuController _cpu = new CpuController();
-        private AppGovernor _appGovernor = new AppGovernor();
+        private List<CustomProfile> _customProfiles = new List<CustomProfile>();
         private DispatcherTimer _monitor;
         private NotifyIcon? _trayIcon;
 
@@ -98,53 +98,34 @@ namespace GearDown
 
         private void Monitor_Tick(object? sender, EventArgs e)
         {
-            int currentTemp = _gpu.GetCurrentTemp();
-            bool profileChanged = _appGovernor.EvaluateForegroundProcess(out var activeProfile, out string processName);
+            var telemetry = _gpu.GetTelemetry();
+            int currentTemp = telemetry.Temperature;
+            int currentClockMhz = telemetry.CurrentClockMhz;
 
-            string activeAppDisplay = string.IsNullOrEmpty(processName)
-                ? "GLOBAL DEFAULT (NO FOCUS)"
-                : $"{processName.ToUpper()} (GLOBAL DEFAULT)";
-
-            if (_appGovernor.IsEnabled && activeProfile != null)
+            if (!string.IsNullOrWhiteSpace(telemetry.GpuName) && telemetry.GpuName != "NVIDIA GPU")
             {
-                activeAppDisplay = $"{processName.ToUpper()} [{activeProfile.DisplaySummary}]";
-
-                if (profileChanged)
-                {
-                    if (activeProfile.Mode == GpuControlMode.TemperatureLock)
-                    {
-                        _gpu.Mode = GpuControlMode.TemperatureLock;
-                        _gpu.Governor.Initialize(activeProfile.TargetTemp, Math.Min(1500, activeProfile.MaxMhz), activeProfile.MaxMhz);
-                    }
-                    else
-                    {
-                        _gpu.Mode = GpuControlMode.FixedFrequency;
-                        _gpu.SetClockLimit(activeProfile.MaxMhz);
-                    }
-                    _cpu.SetThrottleLevel(activeProfile.CpuThrottle);
-                }
+                _gpuNameCache = telemetry.GpuName;
             }
 
-            string activeClockDisplay = "UNCAPPED";
             string govStateText = "STOCK (UNCAPPED)";
 
             if (_gpu.Mode == GpuControlMode.TemperatureLock)
             {
                 _gpu.ProcessThermalGovernorTick(currentTemp, out int activeDynamicMhz);
-                govStateText = $"LOCK @ {_gpu.Governor.TargetTemp}°C (ACTIVE)";
-                activeClockDisplay = $"{activeDynamicMhz} MHz";
+                govStateText = $"LOCK @ {_gpu.Governor.TargetTemp}°C (CAP {activeDynamicMhz} MHz)";
             }
             else if (_gpu.Mode == GpuControlMode.FixedFrequency)
             {
-                govStateText = "FIXED CAP";
-                activeClockDisplay = $"{_gpu.FixedMaxMhz} MHz";
+                govStateText = $"FIXED CAP ({_gpu.FixedMaxMhz} MHz)";
             }
 
+            string currentClockDisplay = currentClockMhz > 0 ? $"{currentClockMhz} MHz" : "-- MHz";
+
             // Post telemetry payload to JS Web UI
-            SendTelemetryToUI(currentTemp, activeClockDisplay, govStateText, activeAppDisplay);
+            SendTelemetryToUI(currentTemp, currentClockDisplay, govStateText);
         }
 
-        private void SendTelemetryToUI(int temp, string activeClock, string govState, string activeApp)
+        private void SendTelemetryToUI(int temp, string activeClock, string govState)
         {
             if (webView.CoreWebView2 == null) return;
 
@@ -154,8 +135,7 @@ namespace GearDown
                 temp = temp,
                 gpuName = _gpuNameCache,
                 activeClock = activeClock,
-                govState = govState,
-                activeApp = activeApp
+                govState = govState
             };
 
             webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
@@ -173,8 +153,7 @@ namespace GearDown
                 gpuFreq = _fixedFreqMhz,
                 targetTemp = _targetTempC,
                 maxCapMhz = _maxCapMhz,
-                appGovEnabled = _appGovernor.IsEnabled,
-                appProfiles = _appGovernor.Profiles
+                profiles = _customProfiles
             };
 
             webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
@@ -215,57 +194,45 @@ namespace GearDown
                         SaveSettings();
                         break;
 
-                    case "toggleAppGov":
-                        bool enabled = root.GetProperty("enabled").GetBoolean();
-                        _appGovernor.IsEnabled = enabled;
-                        SaveSettings();
-                        SendStatusToUI(enabled ? "AUTO PROFILES: ENABLED" : "AUTO PROFILES: DISABLED");
-                        break;
-
-                    case "addRule":
-                        string exe = root.TryGetProperty("exe", out var exeProp) ? exeProp.GetString() ?? "" : "";
-                        if (string.IsNullOrWhiteSpace(exe))
+                    case "saveProfile":
+                        string profName = root.TryGetProperty("name", out var pNameProp) ? pNameProp.GetString()?.Trim() ?? "" : "";
+                        if (!string.IsNullOrWhiteSpace(profName))
                         {
-                            exe = _appGovernor.GetForegroundProcessExeName();
-                        }
-                        if (!string.IsNullOrWhiteSpace(exe) && !exe.Equals("geardown", StringComparison.OrdinalIgnoreCase))
-                        {
-                            exe = Path.GetFileNameWithoutExtension(exe).ToLowerInvariant();
-                            _appGovernor.Profiles.RemoveAll(p => p.ProcessName.Equals(exe, StringComparison.OrdinalIgnoreCase));
+                            int pCpu = root.GetProperty("cpu").GetInt32();
+                            int pMode = root.GetProperty("gpuMode").GetInt32();
+                            int pFreq = root.GetProperty("gpuFreq").GetInt32();
+                            int pTemp = root.GetProperty("targetTemp").GetInt32();
+                            int pMaxCap = root.GetProperty("maxCapMhz").GetInt32();
 
-                            int ruleMode = root.GetProperty("mode").GetInt32();
-                            int ruleTargetTemp = root.GetProperty("targetTemp").GetInt32();
-                            int ruleMaxMhz = root.GetProperty("maxMhz").GetInt32();
-                            int ruleCpu = root.GetProperty("cpuThrottle").GetInt32();
-
-                            _appGovernor.Profiles.Add(new AppProfile
+                            _customProfiles.RemoveAll(p => p.Name.Equals(profName, StringComparison.OrdinalIgnoreCase));
+                            _customProfiles.Add(new CustomProfile
                             {
-                                ProcessName = exe,
-                                DisplayName = exe.ToUpper(),
-                                Mode = (GpuControlMode)ruleMode,
-                                TargetTemp = ruleTargetTemp,
-                                MaxMhz = ruleMaxMhz,
-                                CpuThrottle = ruleCpu
+                                Name = profName,
+                                Cpu = pCpu,
+                                GpuMode = pMode,
+                                GpuFreq = pFreq,
+                                TargetTemp = pTemp,
+                                MaxCapMhz = pMaxCap
                             });
 
                             SaveSettings();
                             SendConfigToUI();
-                            SendStatusToUI($"SAVED PROFILE FOR {exe.ToUpper()}");
+                            SendStatusToUI($"SAVED PROFILE: \"{profName.ToUpper()}\"");
                         }
                         else
                         {
-                            SendStatusToUI("PLEASE ENTER A PROCESS NAME (E.G. CYBERPUNK2077)");
+                            SendStatusToUI("PLEASE ENTER A PROFILE NAME");
                         }
                         break;
 
-                    case "deleteRule":
-                        if (root.TryGetProperty("processName", out var nameProp))
+                    case "deleteProfile":
+                        if (root.TryGetProperty("name", out var delNameProp))
                         {
-                            string pName = nameProp.GetString() ?? "";
-                            _appGovernor.Profiles.RemoveAll(p => p.ProcessName.Equals(pName, StringComparison.OrdinalIgnoreCase));
+                            string delName = delNameProp.GetString() ?? "";
+                            _customProfiles.RemoveAll(p => p.Name.Equals(delName, StringComparison.OrdinalIgnoreCase));
                             SaveSettings();
                             SendConfigToUI();
-                            SendStatusToUI($"REMOVED PROFILE FOR {pName.ToUpper()}");
+                            SendStatusToUI($"DELETED PROFILE: \"{delName.ToUpper()}\"");
                         }
                         break;
 
@@ -304,8 +271,7 @@ namespace GearDown
                         _targetTempC = 75;
                         _maxCapMhz = 2200;
                         _gpu.Mode = GpuControlMode.Disabled;
-                        _appGovernor.IsEnabled = false;
-                        _appGovernor.Profiles.Clear();
+                        _customProfiles.Clear();
 
                         SendConfigToUI();
                         SendStatusToUI("RESTORED STOCK FACTORY DEFAULTS");
@@ -330,13 +296,10 @@ namespace GearDown
                         _targetTempC = doc.RootElement.TryGetProperty("TargetTemp", out var tempProp) ? tempProp.GetInt32() : 75;
                         _maxCapMhz = doc.RootElement.TryGetProperty("MaxCapMhz", out var capProp) ? capProp.GetInt32() : 2200;
 
-                        bool appGovEnabled = doc.RootElement.TryGetProperty("AppGovernorEnabled", out var appGovProp) && appGovProp.GetBoolean();
-                        _appGovernor.IsEnabled = appGovEnabled;
-
-                        if (doc.RootElement.TryGetProperty("AppProfiles", out var profilesProp) && profilesProp.ValueKind == JsonValueKind.Array)
+                        if (doc.RootElement.TryGetProperty("Profiles", out var profilesProp) && profilesProp.ValueKind == JsonValueKind.Array)
                         {
-                            var profiles = JsonSerializer.Deserialize<List<AppProfile>>(profilesProp.GetRawText());
-                            if (profiles != null) _appGovernor.Profiles = profiles;
+                            var profiles = JsonSerializer.Deserialize<List<CustomProfile>>(profilesProp.GetRawText());
+                            if (profiles != null) _customProfiles = profiles;
                         }
 
                         _cpu.SetThrottleLevel(_cpuState);
@@ -367,8 +330,7 @@ namespace GearDown
                     Gpu = _fixedFreqMhz,
                     TargetTemp = _targetTempC,
                     MaxCapMhz = _maxCapMhz,
-                    AppGovernorEnabled = _appGovernor.IsEnabled,
-                    AppProfiles = _appGovernor.Profiles
+                    Profiles = _customProfiles
                 };
                 File.WriteAllText(_configPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
             }

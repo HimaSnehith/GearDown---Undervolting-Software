@@ -1,5 +1,5 @@
-// Web UI State Controller
-(function() {
+// Web UI State Controller for GearDown (Fluent Glass Design)
+(function () {
   let state = {
     gpuMode: 0, // 0 = FixedFrequency, 1 = TemperatureLock
     cpu: 100,
@@ -16,7 +16,12 @@
     tempGaugeArc: document.getElementById('tempGaugeArc'),
     statGovState: document.getElementById('statGovState'),
     statActiveClock: document.getElementById('statActiveClock'),
+    statGpuLoad: document.getElementById('statGpuLoad'),
+    statFanSpeed: document.getElementById('statFanSpeed'),
     gpuNameBadge: document.getElementById('gpuNameBadge'),
+    gpuVendorBadge: document.getElementById('gpuVendorBadge'),
+    driverBadge: document.getElementById('driverBadge'),
+    pcieBadge: document.getElementById('pcieBadge'),
     statusBanner: document.getElementById('statusBanner'),
     liveDot: document.getElementById('liveDot'),
 
@@ -47,6 +52,22 @@
     btnReset: document.getElementById('btnReset')
   };
 
+  // --- TAB NAVIGATION SYSTEM ---
+  const navItems = document.querySelectorAll('.nav-item');
+  const tabViews = document.querySelectorAll('.tab-view');
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const tabName = item.getAttribute('data-tab');
+      navItems.forEach(n => n.classList.remove('active'));
+      tabViews.forEach(v => v.classList.add('hidden'));
+
+      item.classList.add('active');
+      const targetView = document.getElementById(`view${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+      if (targetView) targetView.classList.remove('hidden');
+    });
+  });
+
   // --- C# MESSAGE POSTING ---
   function sendToHost(action, data = {}) {
     if (window.chrome && window.chrome.webview) {
@@ -70,24 +91,90 @@
     });
   }
 
-  // --- UI UPDATE HANDLERS ---
+  function formatGpuName(rawName) {
+    if (!rawName) return { vendor: 'GPU', model: 'Detecting GPU...' };
+    let str = rawName.trim();
+    let vendor = 'GPU';
+
+    if (/nvidia/i.test(str)) {
+      vendor = 'NVIDIA';
+      str = str.replace(/nvidia/i, '').trim();
+    } else if (/amd|radeon/i.test(str)) {
+      vendor = 'AMD';
+      str = str.replace(/amd/i, '').trim();
+    } else if (/intel/i.test(str)) {
+      vendor = 'INTEL';
+      str = str.replace(/intel/i, '').trim();
+    }
+
+    let model = str || rawName;
+    if (model === model.toUpperCase() && model.length > 5) {
+      model = model.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+      model = model.replace(/\b(rtx|gtx|rx|gpu|pcie|ti|super)\b/gi, m => m.toUpperCase());
+    }
+
+    return { vendor, model };
+  }
+
+  // --- TELEMETRY UPDATES ---
   function updateTelemetry(data) {
     if (data.temp !== undefined) {
       el.tempVal.textContent = data.temp;
-      // Gauge ring calculation: circumference = 2 * PI * 68 = ~427
+      // Gauge ring calculation: circumference = 2 * PI * 64 = ~402.12
       const maxTemp = 95;
       const pct = Math.min(1, Math.max(0, data.temp / maxTemp));
-      const offset = 427 - (427 * pct);
-      el.tempGaugeArc.style.strokeDashoffset = offset;
+      const offset = 402 - (402 * pct);
+      if (el.tempGaugeArc) {
+        el.tempGaugeArc.style.strokeDashoffset = offset;
+      }
+
+      // Thermal threshold color states: <70 Green, 70-80 Yellow, >80 Red
+      let tempColor = '#00E676';
+      if (data.temp > 80) {
+        tempColor = '#FF5252';
+      } else if (data.temp >= 70) {
+        tempColor = '#FFB300';
+      }
+
+      if (el.tempVal) el.tempVal.style.color = tempColor;
+      if (el.tempGaugeArc) {
+        el.tempGaugeArc.style.stroke = tempColor;
+        el.tempGaugeArc.style.filter = `drop-shadow(0 0 10px ${tempColor}70)`;
+      }
     }
 
-    if (data.gpuName) el.gpuNameBadge.textContent = data.gpuName;
-    if (data.activeClock) el.statActiveClock.textContent = `${data.activeClock} MHz`;
-    if (data.govState) el.statGovState.textContent = data.govState;
-    if (data.activeApp) el.activeAppText.textContent = data.activeApp;
+    if (data.gpuName) {
+      const parsed = formatGpuName(data.gpuName);
+      if (el.gpuVendorBadge) el.gpuVendorBadge.textContent = parsed.vendor;
+      if (el.gpuNameBadge) el.gpuNameBadge.textContent = parsed.model;
+    }
+    if (data.driverVersion && el.driverBadge) {
+      el.driverBadge.textContent = `Driver ${data.driverVersion}`;
+    }
+    if (data.pcieInfo && el.pcieBadge) {
+      el.pcieBadge.textContent = data.pcieInfo;
+    }
+    if (data.activeClock && el.statActiveClock) {
+      const clockStr = data.activeClock.toString();
+      el.statActiveClock.textContent = (clockStr.includes('MHz') || clockStr.includes('UNCAPPED') || clockStr.includes('STOCK'))
+        ? clockStr
+        : `${clockStr} MHz`;
+    }
+    if (data.govState && el.statGovState) el.statGovState.textContent = data.govState;
+    if (data.activeApp && el.activeAppText) el.activeAppText.textContent = data.activeApp;
+
+    // Real dynamic load & fan speed
+    if (data.gpuLoad !== undefined && el.statGpuLoad) {
+      el.statGpuLoad.textContent = `${data.gpuLoad} %`;
+    }
+    if (data.fanSpeed && el.statFanSpeed) {
+      el.statFanSpeed.textContent = data.fanSpeed;
+    }
   }
 
-  function updateSliderTrack(slider, color) {
+  // --- SLIDER STYLING ---
+  function updateSliderTrack(slider, color = '#00E676') {
+    if (!slider) return;
     const min = parseFloat(slider.min) || 0;
     const max = parseFloat(slider.max) || 100;
     const val = parseFloat(slider.value) || 0;
@@ -102,6 +189,7 @@
     updateSliderTrack(el.maxCapSlider, '#00E676');
   }
 
+  // --- CONFIG APPLIER ---
   function applyConfigToUI(cfg) {
     if (cfg.cpu !== undefined) {
       el.cpuSlider.value = cfg.cpu;
@@ -164,15 +252,15 @@
   function renderRulesList() {
     el.rulesList.innerHTML = '';
     if (!state.appProfiles || state.appProfiles.length === 0) {
-      el.rulesList.innerHTML = '<div style="font-size:10px; color:var(--text-muted); padding:4px;">No app profiles added yet.</div>';
+      el.rulesList.innerHTML = '<div style="font-size:11px; color:var(--text-muted); padding:6px;">No app profiles added yet.</div>';
       return;
     }
 
     state.appProfiles.forEach((profile, index) => {
       const item = document.createElement('div');
       item.className = 'rule-item';
-      
-      const summary = profile.Mode === 1 
+
+      const summary = profile.Mode === 1
         ? `TEMP LOCK ${profile.TargetTemp}°C (${profile.MaxMhz} MHz)`
         : `FIXED CAP ${profile.MaxMhz} MHz`;
 
@@ -232,6 +320,7 @@
 
   el.btnAddRule.addEventListener('click', () => {
     const exe = el.appExeInput.value.trim();
+    if (!exe) return;
     sendToHost('addRule', {
       exe: exe,
       mode: state.gpuMode,
@@ -256,8 +345,37 @@
     sendToHost('reset');
   });
 
+  // Global helper for profile card click handlers
+  window.applyPreset = function (gpuFreq, cpu, gpuMode, targetTemp, maxCapMhz) {
+    state.gpuFreq = gpuFreq;
+    state.cpu = cpu;
+    state.gpuMode = gpuMode;
+    state.targetTemp = targetTemp;
+    state.maxCapMhz = maxCapMhz;
+
+    applyConfigToUI({
+      gpuFreq,
+      cpu,
+      gpuMode,
+      targetTemp,
+      maxCapMhz
+    });
+
+    sendToHost('apply', {
+      cpu,
+      gpuMode,
+      gpuFreq,
+      targetTemp,
+      maxCapMhz
+    });
+
+    showStatus("PRESET PROFILE APPLIED SUCCESSFULLY");
+    setTimeout(() => showStatus(""), 3000);
+  };
+
   // Signal C# host that web app is ready
   document.addEventListener('DOMContentLoaded', () => {
+    updateAllSliderTracks();
     sendToHost('ready');
   });
 })();

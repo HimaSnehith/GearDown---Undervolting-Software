@@ -5,8 +5,10 @@ namespace GearDown.Core
     public class ThermalGovernor
     {
         public int TargetTemp { get; set; } = 75;
-        public int MinMhz { get; set; } = 210;
-        public int MaxMhzCap { get; set; } = 2500;
+        public int HardwareMinMhz { get; set; } = 210;
+        public int HardwareMaxMhz { get; set; } = 3105;
+        public int MinMhz { get; private set; } = 210;
+        public int MaxMhzCap { get; private set; } = 2500;
         public int CurrentDynamicMhz { get; private set; } = 1500;
 
         private double _filteredTemp = 0;
@@ -20,7 +22,12 @@ namespace GearDown.Core
         public void Initialize(int targetTemp, int startingMhz, int maxMhzCap)
         {
             TargetTemp = Math.Clamp(targetTemp, 50, 90);
-            MaxMhzCap = Math.Max(startingMhz, maxMhzCap);
+            MinMhz = Math.Max(210, HardwareMinMhz);
+            
+            // Respect hardware ceiling if discovered, otherwise allow requested cap
+            int upperLimit = HardwareMaxMhz > MinMhz ? HardwareMaxMhz : 3500;
+            MaxMhzCap = Math.Clamp(maxMhzCap, MinMhz, upperLimit);
+            
             CurrentDynamicMhz = Math.Clamp(startingMhz, MinMhz, MaxMhzCap);
             _filteredTemp = 0;
             _previousTemp = 0;
@@ -43,7 +50,6 @@ namespace GearDown.Core
 
             double error = effectiveTemp - TargetTemp;
 
-            // --- ULTRA-SMOOTH EQUILIBRIUM LOGIC ---
             // Deadband zone: [Target - 2°C, Target + 1°C] -> hold clock rock steady if temp is stable
             if (error >= -2.0 && error <= 1.0 && tempDelta <= 0)
             {
@@ -54,7 +60,7 @@ namespace GearDown.Core
 
             if (error > 1.0)
             {
-                // Hotter than target zone -> Micro-step down smoothly (10-25 MHz)
+                // Hotter than target zone -> Micro-step down smoothly (10-45 MHz)
                 if (error >= 6.0) step = 45;
                 else if (error >= 3.0) step = 25;
                 else step = 10;
@@ -66,8 +72,8 @@ namespace GearDown.Core
             }
             else if (error < -2.0)
             {
-                // Cooler than target zone -> Micro-recover clock headroom smoothly (10-25 MHz)
-                if (tempDelta >= 2) return false; // Hold steady while temp is ramping
+                // Cooler than target zone -> Micro-recover clock headroom smoothly (10-30 MHz)
+                if (tempDelta >= 2) return false; // Hold steady while temp is ramping up
 
                 double deficit = -error;
                 if (deficit >= 8.0) step = 30;

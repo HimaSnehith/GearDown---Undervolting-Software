@@ -14,6 +14,7 @@ namespace GearDown.Core
     {
         public int Temperature;
         public int CurrentClockMhz;
+        public int MaxHardwareClockMhz;
         public string DriverVersion;
         public double PowerDrawWatts;
         public int VramUsedMb;
@@ -27,14 +28,17 @@ namespace GearDown.Core
         public GpuControlMode Mode { get; set; } = GpuControlMode.Disabled;
         public ThermalGovernor Governor { get; } = new ThermalGovernor();
         public int FixedMaxMhz { get; private set; } = 1800;
+        public int HardwareMinMhz { get; private set; } = 210;
+        public int HardwareMaxMhz { get; private set; } = 3105;
 
         public GpuTelemetry GetTelemetry()
         {
-            string output = RunNvidiaCommand("--query-gpu=temperature.gpu,clocks.current.graphics,driver_version,power.draw,memory.used,memory.total,name --format=csv,noheader,nounits");
+            string output = RunNvidiaCommand("--query-gpu=temperature.gpu,clocks.current.graphics,clocks.max.graphics,driver_version,power.draw,memory.used,memory.total,name --format=csv,noheader,nounits");
             var result = new GpuTelemetry
             {
                 Temperature = 0,
                 CurrentClockMhz = 0,
+                MaxHardwareClockMhz = HardwareMaxMhz,
                 DriverVersion = "--",
                 PowerDrawWatts = 0,
                 VramUsedMb = 0,
@@ -45,15 +49,21 @@ namespace GearDown.Core
             if (string.IsNullOrWhiteSpace(output) || output == "ERROR") return result;
 
             var parts = output.Split(',');
-            if (parts.Length >= 7)
+            if (parts.Length >= 8)
             {
                 if (int.TryParse(parts[0].Trim(), out int temp)) result.Temperature = temp;
                 if (int.TryParse(parts[1].Trim(), out int clk)) result.CurrentClockMhz = clk;
-                result.DriverVersion = parts[2].Trim();
-                if (double.TryParse(parts[3].Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double pwr)) result.PowerDrawWatts = pwr;
-                if (int.TryParse(parts[4].Trim(), out int vUsed)) result.VramUsedMb = vUsed;
-                if (int.TryParse(parts[5].Trim(), out int vTotal)) result.VramTotalMb = vTotal;
-                result.GpuName = parts[6].Trim();
+                if (int.TryParse(parts[2].Trim(), out int maxHwClk) && maxHwClk > 500)
+                {
+                    result.MaxHardwareClockMhz = maxHwClk;
+                    HardwareMaxMhz = maxHwClk;
+                    Governor.HardwareMaxMhz = maxHwClk;
+                }
+                result.DriverVersion = parts[3].Trim();
+                if (double.TryParse(parts[4].Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double pwr)) result.PowerDrawWatts = pwr;
+                if (int.TryParse(parts[5].Trim(), out int vUsed)) result.VramUsedMb = vUsed;
+                if (int.TryParse(parts[6].Trim(), out int vTotal)) result.VramTotalMb = vTotal;
+                result.GpuName = parts[7].Trim();
             }
             return result;
         }
@@ -65,12 +75,13 @@ namespace GearDown.Core
 
         public string SetClockLimit(int maxMhz)
         {
-            if (maxMhz < 210) maxMhz = 210;
+            if (maxMhz < HardwareMinMhz) maxMhz = HardwareMinMhz;
+            if (HardwareMaxMhz > HardwareMinMhz && maxMhz > HardwareMaxMhz) maxMhz = HardwareMaxMhz;
             FixedMaxMhz = maxMhz;
             Mode = GpuControlMode.FixedFrequency;
             
-            // Allow idle (210), cap at Max
-            return RunNvidiaCommand($"-lgc 210,{maxMhz}");
+            // Allow idle clock (e.g. 210 MHz), cap at maxMhz
+            return RunNvidiaCommand($"-lgc {HardwareMinMhz},{maxMhz}");
         }
 
         public void ResetLimits()
@@ -86,7 +97,7 @@ namespace GearDown.Core
 
             if (Governor.ProcessTick(currentTemp, out int newMhz))
             {
-                RunNvidiaCommand($"-lgc 210,{newMhz}");
+                RunNvidiaCommand($"-lgc {HardwareMinMhz},{newMhz}");
                 activeDynamicMhz = newMhz;
                 return true;
             }
@@ -106,7 +117,7 @@ namespace GearDown.Core
                 p.StartInfo.CreateNoWindow = true;
                 p.Start();
                 string output = p.StandardOutput.ReadToEnd().Trim();
-                p.WaitForExit();
+                p.WaitForExit(3000);
                 return output;
             }
             catch { return "ERROR"; }

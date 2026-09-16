@@ -915,18 +915,126 @@ body {
   font-weight: 500;
 }
 
-.add-rule-row {
+.highlight-card {
+  border-color: rgba(0, 230, 118, 0.28);
+  box-shadow: inset 0 1px 0 0 rgba(0, 230, 118, 0.2), 0 14px 40px -10px rgba(0, 0, 0, 0.65);
+}
+
+.priority-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(0, 230, 118, 0.16);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 230, 118, 0.35);
+}
+
+.header-right-controls {
   display: flex;
+  align-items: center;
   gap: 10px;
-  margin-top: 8px;
+}
+
+.auto-gov-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  padding: 5px 10px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auto-gov-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.auto-gov-toggle-btn.active {
+  background: rgba(0, 230, 118, 0.12);
+  border-color: rgba(0, 230, 118, 0.35);
+  color: var(--accent-green);
+}
+
+.pulse-dot.gray {
+  background: #64748b;
+  box-shadow: none;
+}
+
+/* PROFILE CREATOR BOX */
+.profile-creator-box {
+  background: rgba(6, 10, 8, 0.75);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.creator-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.creator-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-container input[type="checkbox"] {
+  accent-color: var(--accent-green);
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.checkbox-label {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .fluent-input {
-  flex: 1;
+  width: 100%;
   background: var(--surface-input);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-sm);
-  padding: 9px 12px;
+  padding: 8px 12px;
   color: var(--text-primary);
   font-family: var(--font-main);
   font-size: 12px;
@@ -952,7 +1060,7 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .custom-profile-card {
@@ -962,14 +1070,14 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   position: relative;
   transition: all 0.2s ease;
 }
 
 .custom-profile-card:hover {
-  border-color: var(--border-glass-hover);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 230, 118, 0.35);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
 }
 
 .custom-profile-header {
@@ -979,6 +1087,20 @@ body {
   gap: 8px;
 }
 
+.profile-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.custom-priority-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent-green);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .custom-profile-title {
   font-weight: 700;
   font-size: 13.5px;
@@ -986,6 +1108,48 @@ body {
   font-family: var(--font-heading);
   letter-spacing: -0.2px;
   word-break: break-word;
+}
+
+.custom-profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-auto-pill {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-auto-pill.active {
+  background: rgba(0, 230, 118, 0.12);
+  color: var(--accent-green);
+  border-color: rgba(0, 230, 118, 0.3);
+}
+
+.profile-game-tag {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Consolas', monospace;
+}
+
+.profile-game-tag.subtle {
+  font-style: italic;
+  font-family: var(--font-main);
+  color: var(--text-muted);
 }
 
 .btn-card-del {

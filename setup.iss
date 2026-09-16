@@ -1,10 +1,18 @@
 ; Inno Setup Script for GearDown
 ; Configured for 100% Pure Cleanup on Uninstall (No leftover files, folders, or AppData traces)
 
+#ifndef AppVersion
+#define AppVersion "2.4.0"
+#endif
+
+#ifndef OutputBaseFilename
+#define OutputBaseFilename "GearDown_Setup_" + AppVersion
+#endif
+
 [Setup]
 AppId={{D37E84B1-3E2A-4F90-85F0-A1E297394D23}
 AppName=GearDown
-AppVersion=3.0
+AppVersion={#AppVersion}
 AppPublisher=GearDown Software
 DefaultDirName={autopf}\GearDown
 DefaultGroupName=GearDown
@@ -13,7 +21,7 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
-OutputBaseFilename=GearDown_Setup_v2.0
+OutputBaseFilename={#OutputBaseFilename}
 OutputDir=InstallerOutput
 
 [Languages]

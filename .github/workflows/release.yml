@@ -1,0 +1,129 @@
+name: Build & Release GearDown Installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version Tag (e.g., v2.4.0)'
+        required: true
+        default: 'v2.4.0'
+        type: string
+      release_title:
+        description: 'GitHub Release Title'
+        required: false
+        default: 'GearDown Release'
+        type: string
+      prerelease:
+        description: 'Mark as Pre-release'
+        required: false
+        default: false
+        type: boolean
+      draft:
+        description: 'Create as Draft Release'
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Package Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Determine Release Version
+        id: get_version
+        shell: pwsh
+        run: |
+          $ver = "${{ inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($ver)) {
+            if ($env:GITHUB_REF_TYPE -eq 'tag') {
+              $ver = $env:GITHUB_REF_NAME
+            } else {
+              $ver = "v2.4.0"
+            }
+          }
+          Write-Host "Target Release Version: $ver"
+          echo "VERSION=$ver" >> $env:GITHUB_ENV
+
+      - name: Restore NuGet Dependencies
+        run: dotnet restore GearDown.csproj
+
+      - name: Publish GearDown (Release)
+        run: |
+          dotnet publish GearDown.csproj -c Release -r win-x64 --no-self-contained -o bin/Release/net8.0-windows/publish
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing Inno Setup via Chocolatey..."
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Compile Inno Setup Installer (.exe)
+        shell: pwsh
+        run: |
+          # Locate ISCC compiler binary dynamically
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue)?.Source
+          if (-not $iscc) {
+            $iscc = Get-ChildItem -Path "C:\Program Files*", "C:\ProgramData\chocolatey*" -Filter "iscc.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $iscc) {
+            throw "ISCC compiler not found on system!"
+          }
+          Write-Host "Using ISCC at: $iscc"
+
+          # Create output directory
+          if (-not (Test-Path "InstallerOutput")) {
+            New-Item -ItemType Directory -Path "InstallerOutput" | Out-Null
+          }
+
+          # Clean version string (remove leading 'v' for internal setup metadata if present)
+          $cleanVer = $env:VERSION.TrimStart('v')
+          $outFilename = "GearDown_Setup_$($env:VERSION)"
+
+          & "$iscc" "/DAppVersion=$cleanVer" "/DOutputBaseFilename=$outFilename" setup.iss
+
+      - name: Create Portable Zip Package
+        shell: pwsh
+        run: |
+          $zipPath = "InstallerOutput/GearDown_Portable_$($env:VERSION).zip"
+          Compress-Archive -Path "bin/Release/net8.0-windows/publish/*" -DestinationPath $zipPath -Force
+          Write-Host "Created portable archive at: $zipPath"
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GearDown-${{ env.VERSION }}-Installer
+          path: InstallerOutput/*
+          retention-days: 14
+
+      - name: Create GitHub Release & Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ inputs.release_title || format('GearDown {0}', env.VERSION) }}
+          draft: ${{ inputs.draft || false }}
+          prerelease: ${{ inputs.prerelease || false }}
+          generate_release_notes: true
+          files: |
+            InstallerOutput/*.exe
+            InstallerOutput/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

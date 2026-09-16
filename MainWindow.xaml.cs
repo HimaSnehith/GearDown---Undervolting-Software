@@ -26,7 +26,7 @@ namespace GearDown
         private string _configPath;
         private string _gpuNameCache = "NVIDIA GPU DETECTED";
 
-        // Current setting state
+        // Current user settings state
         private int _cpuState = 100;
         private int _fixedFreqMhz = 1800;
         private int _targetTempC = 75;
@@ -133,11 +133,11 @@ namespace GearDown
                 ? $"v{telemetry.DriverVersion}"
                 : "--";
 
-            // Post telemetry payload to JS Web UI
-            SendTelemetryToUI(currentTemp, currentClockDisplay, govStateText, powerDisplay, vramDisplay, driverDisplay);
+            // Post telemetry payload to JS Web UI with dynamic hardware bounds
+            SendTelemetryToUI(currentTemp, currentClockDisplay, govStateText, powerDisplay, vramDisplay, driverDisplay, _gpu.HardwareMinMhz, _gpu.HardwareMaxMhz);
         }
 
-        private void SendTelemetryToUI(int temp, string activeClock, string govState, string power, string vram, string driver)
+        private void SendTelemetryToUI(int temp, string activeClock, string govState, string power, string vram, string driver, int hwMin, int hwMax)
         {
             if (webView.CoreWebView2 == null) return;
 
@@ -150,7 +150,9 @@ namespace GearDown
                 govState = govState,
                 power = power,
                 vram = vram,
-                driver = driver
+                driver = driver,
+                hardwareMinMhz = hwMin,
+                hardwareMaxMhz = hwMax
             };
 
             webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
@@ -168,6 +170,8 @@ namespace GearDown
                 gpuFreq = _fixedFreqMhz,
                 targetTemp = _targetTempC,
                 maxCapMhz = _maxCapMhz,
+                hardwareMinMhz = _gpu.HardwareMinMhz,
+                hardwareMaxMhz = _gpu.HardwareMaxMhz,
                 profiles = _customProfiles
             };
 
@@ -219,8 +223,11 @@ namespace GearDown
                             int pTemp = root.GetProperty("targetTemp").GetInt32();
                             int pMaxCap = root.GetProperty("maxCapMhz").GetInt32();
 
+                            // Remove existing if same name
                             _customProfiles.RemoveAll(p => p.Name.Equals(profName, StringComparison.OrdinalIgnoreCase));
-                            _customProfiles.Add(new CustomProfile
+                            
+                            // Insert at top / 1st Priority
+                            _customProfiles.Insert(0, new CustomProfile
                             {
                                 Name = profName,
                                 Cpu = pCpu,
@@ -232,7 +239,7 @@ namespace GearDown
 
                             SaveSettings();
                             SendConfigToUI();
-                            SendStatusToUI($"SAVED PROFILE: \"{profName.ToUpper()}\"");
+                            SendStatusToUI($"SAVED CUSTOM PROFILE: \"{profName.ToUpper()}\"");
                         }
                         else
                         {

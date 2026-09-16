@@ -250,10 +250,39 @@
 
         </section>
 
-        <!-- TAB 2: PROFILES PRESETS VIEW -->
+        <!-- TAB 2: PROFILES PRESETS VIEW (1ST PRIORITY = CUSTOM PROFILES) -->
         <section id="viewProfiles" class="tab-view hidden">
           
-          <!-- 1. PRE-LOADED SYSTEM PRESETS -->
+          <!-- 1. CUSTOM PROFILES (1ST PRIORITY) -->
+          <div class="card highlight-card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" class="card-icon">
+                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                <span>Custom Profiles</span>
+                <span class="priority-pill">1st Priority</span>
+              </div>
+              <span class="custom-profiles-badge" id="customProfilesCountBadge">0 Profiles</span>
+            </div>
+            <p class="card-desc">Save your tuned settings into custom profiles. Saved profiles appear first for immediate 1-click loading.</p>
+
+            <!-- SAVE NEW PROFILE FORM -->
+            <div class="add-rule-row">
+              <input type="text" id="customProfileInput" placeholder="Enter profile name (e.g. Ghost of Tsushima, Silent Mode, Max Boost)..." class="fluent-input">
+              <button type="button" id="btnSaveCustomProfile" class="btn-primary">+ Save Active Settings</button>
+            </div>
+
+            <!-- DYNAMIC LIST OF CUSTOM PROFILES -->
+            <div id="customProfilesList" class="custom-profiles-grid">
+              <!-- Dynamically populated custom profile cards -->
+            </div>
+          </div>
+
+          <!-- 2. FACTORY PERFORMANCE PRESETS (BASELINE FALLBACK) -->
           <div class="card">
             <div class="card-header">
               <div class="card-title">
@@ -261,10 +290,10 @@
                   stroke-linecap="round" stroke-linejoin="round" class="card-icon">
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                 </svg>
-                <span>Factory Performance Presets</span>
+                <span>Factory Baseline Presets</span>
               </div>
             </div>
-            <p class="card-desc">Instantly switch between tuned baseline performance configurations.</p>
+            <p class="card-desc">Standard performance baselines. Used as fallback when no custom game profile is active.</p>
 
             <div class="presets-grid">
               <div class="preset-card" data-preset="quiet">
@@ -306,45 +335,6 @@
                 </div>
                 <button type="button" class="btn-preset-apply" onclick="applyPreset(2400, 100, 0, 80, 2600, 'max')">Apply High Perf</button>
               </div>
-            </div>
-          </div>
-
-          <!-- 2. SAVE ACTIVE VALUES AS CUSTOM PROFILE -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" class="card-icon">
-                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                  <polyline points="17 21 17 13 7 13 7 21" />
-                  <polyline points="7 3 7 8 15 8" />
-                </svg>
-                <span>Save Custom Profile</span>
-              </div>
-            </div>
-            <p class="card-desc">Save your currently active slider settings into a named profile for easy loading later.</p>
-
-            <div class="add-rule-row">
-              <input type="text" id="customProfileInput" placeholder="Enter profile name (e.g. Ghost of Tsushima, Cyberpunk, Rendering)..." class="fluent-input">
-              <button type="button" id="btnSaveCustomProfile" class="btn-primary">+ Save Active Settings</button>
-            </div>
-          </div>
-
-          <!-- 3. MY SAVED PROFILES LIST -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" class="card-icon">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M3 9h18M9 21V9" />
-                </svg>
-                <span>My Saved Profiles</span>
-              </div>
-              <span class="custom-profiles-badge" id="customProfilesCountBadge">0 Profiles</span>
-            </div>
-            <div id="customProfilesList" class="custom-profiles-grid">
-              <!-- Dynamically populated custom profile cards -->
             </div>
           </div>
 

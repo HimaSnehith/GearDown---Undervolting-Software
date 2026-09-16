@@ -6,6 +6,8 @@
     gpuFreq: 1800,
     targetTemp: 75,
     maxCapMhz: 2200,
+    hardwareMinMhz: 210,
+    hardwareMaxMhz: 3105,
     profiles: []
   };
 
@@ -21,9 +23,7 @@
     statusBanner: document.getElementById('statusBanner'),
 
     // Hardware Telemetry Chips
-    pcieVal: document.getElementById('pcieVal'),
     powerVal: document.getElementById('powerVal'),
-    pstateVal: document.getElementById('pstateVal'),
     vramVal: document.getElementById('vramVal'),
     driverVal: document.getElementById('driverVal'),
 
@@ -57,6 +57,14 @@
   // --- TAB NAVIGATION SYSTEM ---
   const navItems = document.querySelectorAll('.nav-item');
   const tabViews = document.querySelectorAll('.tab-view');
+  const pageHeaderTitle = document.getElementById('pageHeaderTitle');
+
+  const titleMap = {
+    dashboard: 'Dashboard',
+    profiles: 'Performance Profiles',
+    settings: 'Settings',
+    about: 'About GearDown'
+  };
 
   navItems.forEach(item => {
     item.addEventListener('click', () => {
@@ -67,6 +75,10 @@
       item.classList.add('active');
       const targetView = document.getElementById(`view${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
       if (targetView) targetView.classList.remove('hidden');
+
+      if (pageHeaderTitle && titleMap[tabName]) {
+        pageHeaderTitle.textContent = titleMap[tabName];
+      }
     });
   });
 
@@ -165,6 +177,26 @@
     if (data.power && el.powerVal) el.powerVal.textContent = data.power;
     if (data.vram && el.vramVal) el.vramVal.textContent = data.vram;
     if (data.driver && el.driverVal) el.driverVal.textContent = data.driver;
+
+    // Dynamic Hardware Clock Range Bounds
+    if (data.hardwareMaxMhz && data.hardwareMaxMhz > 500) {
+      applyHardwareBounds(data.hardwareMinMhz || 210, data.hardwareMaxMhz);
+    }
+  }
+
+  function applyHardwareBounds(minMhz, maxMhz) {
+    state.hardwareMinMhz = minMhz;
+    state.hardwareMaxMhz = maxMhz;
+
+    if (el.freqSlider) {
+      el.freqSlider.min = minMhz;
+      el.freqSlider.max = maxMhz;
+    }
+    if (el.maxCapSlider) {
+      el.maxCapSlider.min = Math.max(minMhz, 600);
+      el.maxCapSlider.max = maxMhz;
+    }
+    updateAllSliderTracks();
   }
 
   // --- SLIDER STYLING ---
@@ -186,6 +218,9 @@
 
   // --- CONFIG APPLIER ---
   function applyConfigToUI(cfg) {
+    if (cfg.hardwareMaxMhz && cfg.hardwareMaxMhz > 500) {
+      applyHardwareBounds(cfg.hardwareMinMhz || 210, cfg.hardwareMaxMhz);
+    }
     if (cfg.cpu !== undefined) {
       el.cpuSlider.value = cfg.cpu;
       el.cpuValBadge.textContent = `${cfg.cpu} %`;
@@ -240,7 +275,7 @@
     el.statusBanner.classList.remove('hidden');
   }
 
-  // --- CUSTOM PROFILES RENDERING ---
+  // --- CUSTOM PROFILES RENDERING (1ST PRIORITY DISPLAY) ---
   function renderCustomProfilesList() {
     if (!el.customProfilesList) return;
     el.customProfilesList.innerHTML = '';
@@ -256,13 +291,13 @@
     if (!state.profiles || state.profiles.length === 0) {
       el.customProfilesList.innerHTML = `
         <div style="grid-column: 1 / -1; font-size: 11.5px; color: var(--text-muted); padding: 18px; text-align: center; background: rgba(6, 10, 8, 0.4); border-radius: var(--radius-sm); border: 1px dashed var(--border-glass);">
-          No custom profiles saved yet. Set your sliders on the dashboard and save your first profile above!
+          No custom profiles saved yet. Dial in your sliders on the dashboard and save your first profile above!
         </div>
       `;
       return;
     }
 
-    state.profiles.forEach((profile) => {
+    state.profiles.forEach((profile, index) => {
       const card = document.createElement('div');
       card.className = 'custom-profile-card';
 
@@ -274,7 +309,10 @@
 
       card.innerHTML = `
         <div class="custom-profile-header">
-          <span class="custom-profile-title">${escapeHtml(profile.Name)}</span>
+          <div class="profile-title-col">
+            <span class="custom-priority-tag">#${index + 1} Priority</span>
+            <span class="custom-profile-title">${escapeHtml(profile.Name)}</span>
+          </div>
           <div class="custom-profile-actions">
             <button type="button" class="btn-card-del" title="Delete Profile" data-name="${escapeHtml(profile.Name)}">✕</button>
           </div>
@@ -315,39 +353,33 @@
     el.cpuValBadge.textContent = `${e.target.value} %`;
     state.cpu = parseInt(e.target.value);
     updateSliderTrack(el.cpuSlider, '#FFB300');
-    syncHeaderPresetPill();
   });
 
   el.freqSlider.addEventListener('input', (e) => {
     el.freqValBadge.textContent = `${e.target.value} MHz`;
     state.gpuFreq = parseInt(e.target.value);
     updateSliderTrack(el.freqSlider, '#00E676');
-    syncHeaderPresetPill();
   });
 
   el.targetTempSlider.addEventListener('input', (e) => {
     el.targetTempValBadge.textContent = `${e.target.value} °C`;
     state.targetTemp = parseInt(e.target.value);
     updateSliderTrack(el.targetTempSlider, '#FF5252');
-    syncHeaderPresetPill();
   });
 
   el.maxCapSlider.addEventListener('input', (e) => {
     el.maxCapValBadge.textContent = `${e.target.value} MHz`;
     state.maxCapMhz = parseInt(e.target.value);
     updateSliderTrack(el.maxCapSlider, '#00E676');
-    syncHeaderPresetPill();
   });
 
   el.btnFixedMode.addEventListener('click', () => {
     setGpuModeUI(0);
-    syncHeaderPresetPill();
     sendToHost('setGpuMode', { mode: 0 });
   });
 
   el.btnTempMode.addEventListener('click', () => {
     setGpuModeUI(1);
-    syncHeaderPresetPill();
     sendToHost('setGpuMode', { mode: 1 });
   });
 

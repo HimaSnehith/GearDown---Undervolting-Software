@@ -26,7 +26,7 @@ namespace GearDown.Core
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.CreateNoWindow = true;
                 p.Start();
-                p.WaitForExit();
+                p.WaitForExit(3000);
             }
             catch { }
         }

@@ -45,6 +45,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+          global-json-file: global.json
 
       - name: Determine Release Version
         id: get_version
@@ -62,7 +63,7 @@ jobs:
           echo "VERSION=$ver" >> $env:GITHUB_ENV
 
       - name: Restore NuGet Dependencies
-        run: dotnet restore GearDown.csproj
+        run: dotnet restore GearDown.csproj --source https://api.nuget.org/v3/index.json
 
       - name: Publish GearDown (Release)
         run: |

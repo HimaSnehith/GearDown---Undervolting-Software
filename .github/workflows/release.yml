@@ -51,16 +51,18 @@ jobs:
         id: get_version
         shell: pwsh
         run: |
-          $ver = "${{ inputs.version }}"
-          if ([string]::IsNullOrWhiteSpace($ver)) {
+          $tag = "${{ inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($tag)) {
             if ($env:GITHUB_REF_TYPE -eq 'tag') {
-              $ver = $env:GITHUB_REF_NAME
+              $tag = $env:GITHUB_REF_NAME
             } else {
-              $ver = "v2.4.0"
+              $tag = "v2.4.0"
             }
           }
-          Write-Host "Target Release Version: $ver"
-          echo "VERSION=$ver" >> $env:GITHUB_ENV
+          $cleanVer = $tag.TrimStart('v')
+          Write-Host "Target Release Tag: $tag (Clean SemVer: $cleanVer)"
+          echo "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+          echo "SEMVER_VERSION=$cleanVer" >> $env:GITHUB_ENV
 
       - name: Restore NuGet Dependencies
         run: dotnet restore GearDown.csproj --source https://api.nuget.org/v3/index.json
@@ -95,31 +97,29 @@ jobs:
             New-Item -ItemType Directory -Path "InstallerOutput" | Out-Null
           }
 
-          # Clean version string (remove leading 'v' for internal setup metadata if present)
-          $cleanVer = $env:VERSION.TrimStart('v')
-          $outFilename = "GearDown_Setup_$($env:VERSION)"
+          $outFilename = "GearDown_Setup_$($env:RELEASE_TAG)"
 
-          & "$iscc" "/DAppVersion=$cleanVer" "/DOutputBaseFilename=$outFilename" setup.iss
+          & "$iscc" "/DAppVersion=$($env:SEMVER_VERSION)" "/DOutputBaseFilename=$outFilename" setup.iss
 
       - name: Create Portable Zip Package
         shell: pwsh
         run: |
-          $zipPath = "InstallerOutput/GearDown_Portable_$($env:VERSION).zip"
+          $zipPath = "InstallerOutput/GearDown_Portable_$($env:RELEASE_TAG).zip"
           Compress-Archive -Path "bin/Release/net8.0-windows/publish/*" -DestinationPath $zipPath -Force
           Write-Host "Created portable archive at: $zipPath"
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: GearDown-${{ env.VERSION }}-Installer
+          name: GearDown-${{ env.RELEASE_TAG }}-Installer
           path: InstallerOutput/*
           retention-days: 14
 
       - name: Create GitHub Release & Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION }}
-          name: ${{ inputs.release_title || format('GearDown {0}', env.VERSION) }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ inputs.release_title || format('GearDown {0}', env.RELEASE_TAG) }}
           draft: ${{ inputs.draft || false }}
           prerelease: ${{ inputs.prerelease || false }}
           generate_release_notes: true

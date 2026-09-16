@@ -17,6 +17,7 @@
     statActiveClock: document.getElementById('statActiveClock'),
     gpuNameBadge: document.getElementById('gpuNameBadge'),
     gpuVendorBadge: document.getElementById('gpuVendorBadge'),
+    sidebarGpuChip: document.getElementById('sidebarGpuChip'),
     statusBanner: document.getElementById('statusBanner'),
 
     // Hardware Telemetry Chips
@@ -146,7 +147,10 @@
 
     if (data.gpuName) {
       const parsed = formatGpuName(data.gpuName);
-      if (el.gpuVendorBadge) el.gpuVendorBadge.textContent = parsed.vendor;
+      if (el.gpuVendorBadge) el.gpuVendorBadge.textContent = (parsed.vendor === 'NVIDIA') ? 'NV' : parsed.vendor;
+      const statusVendorTag = document.getElementById('statusVendorTag');
+      if (statusVendorTag) statusVendorTag.textContent = parsed.vendor;
+      if (el.sidebarGpuChip) el.sidebarGpuChip.setAttribute('data-tooltip', `${parsed.vendor} ${parsed.model}`);
       if (el.gpuNameBadge) el.gpuNameBadge.textContent = parsed.model;
     }
     if (data.activeClock && el.statActiveClock) {

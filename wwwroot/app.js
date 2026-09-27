@@ -301,36 +301,43 @@
       const card = document.createElement('div');
       card.className = 'custom-profile-card';
 
-      const isTempLock = profile.GpuMode === 1;
+      const pName = profile.Name ?? profile.name ?? 'Custom Profile';
+      const pGpuMode = profile.GpuMode ?? profile.gpuMode ?? 0;
+      const pCpu = profile.Cpu ?? profile.cpu ?? 100;
+      const pGpuFreq = profile.GpuFreq ?? profile.gpuFreq ?? 1800;
+      const pTargetTemp = profile.TargetTemp ?? profile.targetTemp ?? 75;
+      const pMaxCapMhz = profile.MaxCapMhz ?? profile.maxCapMhz ?? 2200;
+
+      const isTempLock = pGpuMode === 1;
       const modeLabel = isTempLock ? 'Dynamic Temp Lock' : 'Fixed Clock';
       const targetDetail = isTempLock
-        ? `<div><span>Target Temp:</span> ${profile.TargetTemp} °C</div><div><span>Max Cap:</span> ${profile.MaxCapMhz} MHz</div>`
-        : `<div><span>Clock Cap:</span> ${profile.GpuFreq} MHz</div>`;
+        ? `<div><span>Target Temp:</span> ${pTargetTemp} °C</div><div><span>Max Cap:</span> ${pMaxCapMhz} MHz</div>`
+        : `<div><span>Clock Cap:</span> ${pGpuFreq} MHz</div>`;
 
       card.innerHTML = `
         <div class="custom-profile-header">
           <div class="profile-title-col">
             <span class="custom-priority-tag">#${index + 1} Priority</span>
-            <span class="custom-profile-title">${escapeHtml(profile.Name)}</span>
+            <span class="custom-profile-title">${escapeHtml(pName)}</span>
           </div>
           <div class="custom-profile-actions">
-            <button type="button" class="btn-card-del" title="Delete Profile" data-name="${escapeHtml(profile.Name)}">✕</button>
+            <button type="button" class="btn-card-del" title="Delete Profile" data-name="${escapeHtml(pName)}">✕</button>
           </div>
         </div>
         <div class="custom-profile-specs">
           <div><span>Mode:</span> ${modeLabel}</div>
           ${targetDetail}
-          <div><span>CPU Scaling:</span> ${profile.Cpu} %</div>
+          <div><span>CPU Scaling:</span> ${pCpu} %</div>
         </div>
         <button type="button" class="btn-preset-apply" data-apply="true">Apply Profile</button>
       `;
 
       card.querySelector('[data-apply="true"]').addEventListener('click', () => {
-        window.applyPreset(profile.GpuFreq, profile.Cpu, profile.GpuMode, profile.TargetTemp, profile.MaxCapMhz, profile.Name);
+        window.applyPreset(pGpuFreq, pCpu, pGpuMode, pTargetTemp, pMaxCapMhz, pName);
       });
 
       card.querySelector('.btn-card-del').addEventListener('click', () => {
-        sendToHost('deleteProfile', { name: profile.Name });
+        sendToHost('deleteProfile', { name: pName });
       });
 
       el.customProfilesList.appendChild(card);

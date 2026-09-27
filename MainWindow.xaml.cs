@@ -310,22 +310,21 @@ namespace GearDown
                 if (File.Exists(_configPath))
                 {
                     var json = File.ReadAllText(_configPath);
-                    using (JsonDocument doc = JsonDocument.Parse(json))
+                    var options = new JsonSerializerOptions
                     {
-                        _cpuState = doc.RootElement.GetProperty("Cpu").GetInt32();
-                        int savedGpuMode = doc.RootElement.TryGetProperty("GpuMode", out var modeProp) ? modeProp.GetInt32() : 0;
-                        _fixedFreqMhz = doc.RootElement.GetProperty("Gpu").GetInt32();
-                        _targetTempC = doc.RootElement.TryGetProperty("TargetTemp", out var tempProp) ? tempProp.GetInt32() : 75;
-                        _maxCapMhz = doc.RootElement.TryGetProperty("MaxCapMhz", out var capProp) ? capProp.GetInt32() : 2200;
-
-                        if (doc.RootElement.TryGetProperty("Profiles", out var profilesProp) && profilesProp.ValueKind == JsonValueKind.Array)
-                        {
-                            var profiles = JsonSerializer.Deserialize<List<CustomProfile>>(profilesProp.GetRawText());
-                            if (profiles != null) _customProfiles = profiles;
-                        }
+                        PropertyNameCaseInsensitive = true
+                    };
+                    var config = JsonSerializer.Deserialize<AppConfig>(json, options);
+                    if (config != null)
+                    {
+                        _cpuState = config.Cpu;
+                        _fixedFreqMhz = config.Gpu;
+                        _targetTempC = config.TargetTemp;
+                        _maxCapMhz = config.MaxCapMhz;
+                        _customProfiles = config.Profiles ?? new List<CustomProfile>();
+                        _gpu.Mode = (GpuControlMode)config.GpuMode;
 
                         _cpu.SetThrottleLevel(_cpuState);
-                        _gpu.Mode = (GpuControlMode)savedGpuMode;
 
                         if (_gpu.Mode == GpuControlMode.TemperatureLock)
                         {
@@ -345,7 +344,7 @@ namespace GearDown
         {
             try
             {
-                var config = new
+                var config = new AppConfig
                 {
                     Cpu = _cpuState,
                     GpuMode = (int)_gpu.Mode,
@@ -354,7 +353,11 @@ namespace GearDown
                     MaxCapMhz = _maxCapMhz,
                     Profiles = _customProfiles
                 };
-                File.WriteAllText(_configPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
+                var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+                string tmpPath = _configPath + ".tmp";
+                File.WriteAllText(tmpPath, json);
+                if (File.Exists(_configPath)) File.Delete(_configPath);
+                File.Move(tmpPath, _configPath);
             }
             catch { }
         }

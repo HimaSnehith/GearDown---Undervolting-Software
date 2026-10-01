@@ -276,7 +276,7 @@ namespace GearDown
                         else
                         {
                             int currentTemp = _gpu.GetCurrentTemp();
-                            _gpu.Governor.Initialize(_targetTempC, Math.Min(1500, _maxCapMhz), _maxCapMhz);
+                            _gpu.Governor.Initialize(_targetTempC, _maxCapMhz, _maxCapMhz);
                             _gpu.ProcessThermalGovernorTick(currentTemp, out _);
                             SendStatusToUI($"EXECUTED · CPU {_cpuState}% · GPU TEMP LOCK {_targetTempC}°C");
                         }
@@ -328,7 +328,7 @@ namespace GearDown
 
                         if (_gpu.Mode == GpuControlMode.TemperatureLock)
                         {
-                            _gpu.Governor.Initialize(_targetTempC, Math.Min(1500, _maxCapMhz), _maxCapMhz);
+                            _gpu.Governor.Initialize(_targetTempC, _maxCapMhz, _maxCapMhz);
                         }
                         else if (_gpu.Mode == GpuControlMode.FixedFrequency)
                         {

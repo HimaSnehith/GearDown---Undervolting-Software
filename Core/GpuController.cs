@@ -5,9 +5,9 @@ namespace GearDown.Core
 {
     public enum GpuControlMode
     {
-        Disabled = 0,        // Stock / Uncapped (Default out-of-box, no limits applied)
-        FixedFrequency = 1,  // Fixed Clock Cap
-        TemperatureLock = 2  // Dynamic Temperature Lock
+        FixedFrequency = 0,  // Fixed Clock Cap
+        TemperatureLock = 1, // Dynamic Temperature Lock
+        Disabled = 2         // Stock / Uncapped (Default out-of-box, no limits applied)
     }
 
     public struct GpuTelemetry

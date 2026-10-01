@@ -45,7 +45,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-          global-json-file: global.json
 
       - name: Determine Release Version
         id: get_version
@@ -69,28 +68,48 @@ jobs:
 
       - name: Publish GearDown (Release)
         run: |
-          dotnet publish GearDown.csproj -c Release -r win-x64 --no-self-contained -o bin/Release/net8.0-windows/publish
+          dotnet publish GearDown.csproj -c Release -r win-x64 --self-contained false -o bin/Release/net8.0-windows/publish
 
-      - name: Install Inno Setup
+      - name: Install & Locate Inno Setup
         shell: pwsh
         run: |
-          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+          # Look for existing Inno Setup installations on Windows runner
+          $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
+          if (-not $iscc) {
+            $candidates = @(
+              "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+              "C:\Program Files\Inno Setup 6\ISCC.exe",
+              "C:\Program Files\Inno Setup 7\ISCC.exe",
+              "C:\ProgramData\chocolatey\bin\iscc.exe"
+            )
+            foreach ($c in $candidates) {
+              if (Test-Path $c) { $iscc = $c; break }
+            }
+          }
+
+          if (-not $iscc) {
             Write-Host "Installing Inno Setup via Chocolatey..."
             choco install innosetup --no-progress -y
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+            if (-not (Test-Path $iscc)) {
+              $iscc = (Get-ChildItem -Path "C:\Program Files*", "C:\ProgramData\chocolatey*" -Filter "iscc.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
+            }
           }
+
+          Write-Host "Found Inno Setup Compiler: $iscc"
+          echo "ISCC_PATH=$iscc" >> $env:GITHUB_ENV
 
       - name: Compile Inno Setup Installer (.exe)
         shell: pwsh
         run: |
-          # Locate ISCC compiler binary dynamically
-          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue)?.Source
-          if (-not $iscc) {
-            $iscc = Get-ChildItem -Path "C:\Program Files*", "C:\ProgramData\chocolatey*" -Filter "iscc.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          $iscc = "$env:ISCC_PATH"
+          if (-not $iscc -or -not (Test-Path $iscc)) {
+            $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
           }
           if (-not $iscc) {
-            throw "ISCC compiler not found on system!"
+            throw "ISCC compiler could not be located."
           }
-          Write-Host "Using ISCC at: $iscc"
+          Write-Host "Compiling installer with: $iscc"
 
           # Create output directory
           if (-not (Test-Path "InstallerOutput")) {

@@ -46,9 +46,9 @@
   --radius-md: 12px;
   --radius-lg: 16px;
 
-  /* Typography Fonts */
-  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-heading: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  /* Typography Fonts — system fonts only (no external dependency) */
+  --font-main: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 /* BASE RESET */
@@ -909,12 +909,6 @@ body {
   transform: translateX(18px);
 }
 
-.toggle-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
 .highlight-card {
   border-color: rgba(0, 230, 118, 0.28);
   box-shadow: inset 0 1px 0 0 rgba(0, 230, 118, 0.2), 0 14px 40px -10px rgba(0, 0, 0, 0.65);
@@ -932,101 +926,9 @@ body {
   border: 1px solid rgba(0, 230, 118, 0.35);
 }
 
-.header-right-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.auto-gov-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-glass);
-  padding: 5px 10px;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.auto-gov-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: var(--text-primary);
-}
-
-.auto-gov-toggle-btn.active {
-  background: rgba(0, 230, 118, 0.12);
-  border-color: rgba(0, 230, 118, 0.35);
-  color: var(--accent-green);
-}
-
 .pulse-dot.gray {
   background: #64748b;
   box-shadow: none;
-}
-
-/* PROFILE CREATOR BOX */
-.profile-creator-box {
-  background: rgba(6, 10, 8, 0.75);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.creator-inputs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.input-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.creator-actions-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-container input[type="checkbox"] {
-  accent-color: var(--accent-green);
-  cursor: pointer;
-  width: 14px;
-  height: 14px;
-}
-
-.checkbox-label {
-  font-size: 11.5px;
-  color: var(--text-secondary);
-  font-weight: 500;
 }
 
 .fluent-input {
@@ -1039,6 +941,8 @@ body {
   font-family: var(--font-main);
   font-size: 12px;
   outline: none;
+  user-select: text;
+  -webkit-user-select: text;
   transition: border-color 0.15s ease;
 }
 
@@ -1114,42 +1018,6 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.profile-auto-pill {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.profile-auto-pill.active {
-  background: rgba(0, 230, 118, 0.12);
-  color: var(--accent-green);
-  border-color: rgba(0, 230, 118, 0.3);
-}
-
-.profile-game-tag {
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.03);
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-glass);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Consolas', monospace;
-}
-
-.profile-game-tag.subtle {
-  font-style: italic;
-  font-family: var(--font-main);
-  color: var(--text-muted);
 }
 
 .btn-card-del {

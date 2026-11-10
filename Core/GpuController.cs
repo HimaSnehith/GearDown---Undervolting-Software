@@ -31,6 +31,9 @@ namespace GearDown.Core
         public int HardwareMinMhz { get; private set; } = 210;
         public int HardwareMaxMhz { get; private set; } = 3105;
 
+        /// <summary>Last temperature polled during monitor tick — avoids a redundant nvidia-smi call.</summary>
+        public int LastKnownTemp { get; private set; } = 0;
+
         public GpuTelemetry GetTelemetry()
         {
             string output = RunNvidiaCommand("--query-gpu=temperature.gpu,clocks.current.graphics,clocks.max.graphics,driver_version,power.draw,memory.used,memory.total,name --format=csv,noheader,nounits");
@@ -51,26 +54,42 @@ namespace GearDown.Core
             var parts = output.Split(',');
             if (parts.Length >= 8)
             {
-                if (int.TryParse(parts[0].Trim(), out int temp)) result.Temperature = temp;
-                if (int.TryParse(parts[1].Trim(), out int clk)) result.CurrentClockMhz = clk;
-                if (int.TryParse(parts[2].Trim(), out int maxHwClk) && maxHwClk > 500)
+                // New NVIDIA drivers (560+) return temperature as a float (e.g. "42.56").
+                // Parse as double and round — handles both old integer and new float formats.
+                if (double.TryParse(parts[0].Trim(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double tempD))
+                    result.Temperature = (int)Math.Round(tempD);
+
+                if (double.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double clkD))
+                    result.CurrentClockMhz = (int)Math.Round(clkD);
+
+                if (double.TryParse(parts[2].Trim(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double maxHwClkD) && maxHwClkD > 500)
                 {
-                    result.MaxHardwareClockMhz = maxHwClk;
-                    HardwareMaxMhz = maxHwClk;
-                    Governor.HardwareMaxMhz = maxHwClk;
+                    result.MaxHardwareClockMhz = (int)Math.Round(maxHwClkD);
+                    HardwareMaxMhz = result.MaxHardwareClockMhz;
+                    Governor.HardwareMaxMhz = result.MaxHardwareClockMhz;
                 }
+
                 result.DriverVersion = parts[3].Trim();
-                if (double.TryParse(parts[4].Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double pwr)) result.PowerDrawWatts = pwr;
-                if (int.TryParse(parts[5].Trim(), out int vUsed)) result.VramUsedMb = vUsed;
-                if (int.TryParse(parts[6].Trim(), out int vTotal)) result.VramTotalMb = vTotal;
+                if (double.TryParse(parts[4].Trim(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double pwr))
+                    result.PowerDrawWatts = pwr;
+
+                if (double.TryParse(parts[5].Trim(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double vUsed))
+                    result.VramUsedMb = (int)Math.Round(vUsed);
+
+                if (double.TryParse(parts[6].Trim(), System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double vTotal))
+                    result.VramTotalMb = (int)Math.Round(vTotal);
+
                 result.GpuName = parts[7].Trim();
             }
-            return result;
-        }
 
-        public int GetCurrentTemp()
-        {
-            return GetTelemetry().Temperature;
+            LastKnownTemp = result.Temperature;
+            return result;
         }
 
         public string SetClockLimit(int maxMhz)
@@ -114,10 +133,12 @@ namespace GearDown.Core
                 p.StartInfo.Arguments = arguments;
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.CreateNoWindow = true;
                 p.Start();
                 string output = p.StandardOutput.ReadToEnd().Trim();
                 p.WaitForExit(3000);
+                if (!p.HasExited) p.Kill();
                 return output;
             }
             catch { return "ERROR"; }

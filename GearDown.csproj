@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
-    <PackageReference Include="NvAPIWrapper.Net" Version="0.8.1.101" />
   </ItemGroup>
   
   <ItemGroup>

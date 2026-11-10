@@ -65,8 +65,16 @@ namespace GearDown
                 var env = await CoreWebView2Environment.CreateAsync(null, webViewDataFolder);
                 await webView.EnsureCoreWebView2Async(env);
 
-                webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-                webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
+                var settings = webView.CoreWebView2.Settings;
+                settings.AreDefaultContextMenusEnabled = false;
+                settings.AreDevToolsEnabled = false;          // Disable in production (saves memory)
+                settings.IsStatusBarEnabled = false;
+                settings.IsSwipeNavigationEnabled = false;
+                settings.AreBrowserAcceleratorKeysEnabled = false;
+                settings.IsBuiltInErrorPageEnabled = false;
+                settings.IsReputationCheckingRequired = false; // No SmartScreen for local app
+                settings.IsGeneralAutofillEnabled = false;
+                settings.IsPasswordAutosaveEnabled = false;
 
                 webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
 
@@ -275,9 +283,9 @@ namespace GearDown
                         }
                         else
                         {
-                            int currentTemp = _gpu.GetCurrentTemp();
+                            // Use last-polled temp from monitor tick — avoids a redundant nvidia-smi process spawn
                             _gpu.Governor.Initialize(_targetTempC, _maxCapMhz, _maxCapMhz);
-                            _gpu.ProcessThermalGovernorTick(currentTemp, out _);
+                            _gpu.ProcessThermalGovernorTick(_gpu.LastKnownTemp, out _);
                             SendStatusToUI($"EXECUTED · CPU {_cpuState}% · GPU TEMP LOCK {_targetTempC}°C");
                         }
 
@@ -300,7 +308,10 @@ namespace GearDown
                         break;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GearDown] WebMessage error: {ex.Message}");
+            }
         }
 
         private void LoadSettings()
